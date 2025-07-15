@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
       <a class="navbar-brand d-flex align-items-center" href="#">
@@ -35,4 +35,20 @@
       </div>
     </div>
   </nav>
+</template> -->
+<template>
+  <header class="h-15 flex justify-between items-center px-4 py-2 bg-pink-300 shadow-md">
+    <h1 class="text-xl font-bold text-white flex items-center gap-2">
+      <img src="/logo.png" alt="Лого" class="w-10 h-10 object-contain" />
+      Кур0чка
+    </h1>
+    <nav class="flex gap-4">
+      <div class="mr-4">
+        <UButton to="/" class="bg-pink-500 mr-4 hover:bg-pink-600">Меню</UButton>
+        <UButton to="/" class="bg-pink-500 hover:bg-pink-600">Доставка</UButton>
+      </div>
+      <UButton to="/cart" class="bg-pink-500 hover:bg-pink-600" icon="i-heroicons-shopping-cart" />
+      <UButton to="/signup" class="bg-pink-500 hover:bg-pink-600">Увійти</UButton>
+    </nav>
+  </header>
 </template>
