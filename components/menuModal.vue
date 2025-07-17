@@ -1,3 +1,43 @@
+<script setup>
+import { ref, watch } from 'vue'
+
+const props = defineProps({
+  id: [String, Number]
+})
+
+const emit = defineEmits(['close'])
+function close() {
+  emit('close')
+}
+
+const menuItem = ref(null)
+const loading = ref(false)
+const error = ref(null)
+
+async function fetchMenuItem(id) {
+  if (!id) return
+  loading.value = true
+  error.value = null
+  try {
+    menuItem.value = await $fetch(`/api/menu/${id}`)
+  } catch (e) {
+    error.value = 'Ошибка загрузки блюда'
+    menuItem.value = null
+  } finally {
+    loading.value = false
+  }
+}
+
+// Следим за изменением id и сразу подгружаем блюдо
+watch(
+  () => props.id,
+  (newId) => {
+    fetchMenuItem(newId)
+  },
+  { immediate: true }
+)
+</script>
+
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm" @click.self="close">
     <div class="relative bg-white border-2 border-pink-300 rounded-2xl shadow-2xl max-w-lg w-full p-6 flex flex-col md:flex-row gap-6 animate-fade-in">
@@ -9,18 +49,17 @@
       >&times;</button>
       <!-- Картинка -->
       <img
+        v-if="menuItem"
         class="w-40 h-60 object-cover object-top rounded-xl border border-pink-200 shadow md:w-40 md:h-60 w-full max-w-xs"
-        :src="imgSrc"
-        alt="Курочка гриль"
+        :src="menuItem.image_url"
+        :alt="menuItem.name"
       />
       <!-- Информация -->
-      <div class="flex-1 flex flex-col justify-between">
+      <div v-if="menuItem" class="flex-1 flex flex-col justify-between">
         <div>
-          <h2 class="text-3xl font-extrabold text-pink-700 mb-2">Курочка №{{ id }}</h2>
-          <p class="text-gray-700 mb-4">
-            Соковита курочка гриль, приготовлена за авторським рецептом. Подається з соусом та овочами.
-          </p>
-          <div class="text-lg font-semibold text-pink-600 mb-4">Ціна: <b>200₴</b></div>
+          <h2 class="text-3xl font-extrabold text-pink-700 mb-2">{{ menuItem.name }}</h2>
+          <p class="text-gray-700 mb-4">{{ menuItem.description }}</p>
+          <div class="text-lg font-semibold text-pink-600 mb-4">Ціна: <b>{{ menuItem.price }}₴</b></div>
         </div>
         <UButton
           class="bg-pink-500 text-white font-bold rounded-lg px-8 py-3 shadow hover:bg-pink-600 transition w-full"
@@ -29,20 +68,11 @@
           До кошика
         </UButton>
       </div>
+      <div v-if="loading" class="w-full text-center py-8">Загрузка...</div>
+      <div v-if="error" class="w-full text-center py-8 text-red-500">{{ error }}</div>
     </div>
   </div>
 </template>
-
-<script setup>
-const props = defineProps({
-  id: [String, Number]
-})
-const emit = defineEmits(['close'])
-function close() {
-  emit('close')
-}
-const imgSrc = '/menu.jpg'
-</script>
 
 <style scoped>
 @keyframes fade-in {
