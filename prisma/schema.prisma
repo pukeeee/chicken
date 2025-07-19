@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  name      String?
+  phone     String?
+  token     String?   @unique
+  role      Role      @default(USER)
+  createdAt DateTime  @default(now())
+  orders    Order[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  image       String?
+  createdAt   DateTime    @default(now())
+  category    Category?   @relation(fields: [categoryId], references: [id])
+  categoryId  Int?
+  orderItems  OrderItem[]
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String
+  products Product[]
+}
+
+model Order {
+  id         Int         @id @default(autoincrement())
+  user       User?       @relation(fields: [userId], references: [id])
+  userId     Int?
+  createdAt  DateTime    @default(now())
+  status     String      @default("pending") // можно enum
+  items      OrderItem[]
+  payment    Payment?
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   Int
+  product   Product  @relation(fields: [productId], references: [id])
+  productId Int
+  quantity  Int      @default(1)
+  price     Float    // цена на момент покупки
+}
+
+model Payment {
+  id        Int      @id @default(autoincrement())
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   Int
+  amount    Float
+  status    String   @default("pending") // можно enum
+  createdAt DateTime @default(now())
+}
