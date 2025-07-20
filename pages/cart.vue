@@ -1,9 +1,7 @@
 <script setup>
-const cartItems = [
-  { id: 1, name: 'Куряче філе', price: 350, quantity: 2 },
-  { id: 2, name: 'Яйця', price: 120, quantity: 1 },
-  { id: 3, name: 'Картопля', price: 80, quantity: 5 }
-]
+import { useCartStore } from '~/stores/cart'
+
+const cart = useCartStore()
 
 // Заглушки для кнопок
 function onIncrease(item) {
@@ -34,7 +32,7 @@ function onCheckout() {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in cartItems" :key="item.id" class="border-b hover:bg-gray-50">
+          <tr v-for="item in cart.items" :key="item.id" class="border-b hover:bg-gray-50">
             <td class="px-4 py-3">{{ item.name }}</td>
             <td class="px-4 py-3 text-center">
               <div class="flex items-center justify-center gap-2">
@@ -42,32 +40,35 @@ function onCheckout() {
                   variant="solid"
                   icon="i-heroicons-minus"
                   size="sm"
-                  class="transition bg-pink-500 hover:bg-pink-600"
-                  @click="onDecrease(item)"
+                  class="transition rounded-full bg-pink-500 hover:bg-pink-600"
+                  @click="cart.changeQuantity(item.id, -1)"
                 />
                 <span class="mx-2">{{ item.quantity }}</span>
                 <UButton
                   variant="solid"
                   icon="i-heroicons-plus"
                   size="sm"
-                  class="transition bg-pink-500 hover:bg-pink-600"
-                  @click="onIncrease(item)"
+                  class="transition rounded-full bg-pink-500 hover:bg-pink-600"
+                  @click="cart.changeQuantity(item.id, 1)"
                 />
               </div>
             </td>
-            <td class="px-4 py-3 text-center">{{ item.price }} ₴</td>
+            <td class="px-4 py-3 text-center">{{ item.price * item.quantity }} ₴</td>
             <td class="px-4 py-3 text-center">
               <UButton
                 variant="solid"
                 icon="i-heroicons-trash"
                 size="sm"
                 class="px-4 transition bg-pink-500 hover:bg-pink-600"
-                @click="onRemove(item)"
+                @click="cart.removeFromCart(item.id)"
               />
             </td>
           </tr>
         </tbody>
       </table>
+    </div>
+    <div class="flex justify-end mt-4 text-xl font-bold">
+      Всього: {{ cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0) }} ₴
     </div>
     <div class="flex justify-end mt-6">
       <UButton

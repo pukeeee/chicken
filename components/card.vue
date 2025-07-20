@@ -1,21 +1,35 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useCartStore } from '~/stores/cart'
 
 const emit = defineEmits(['open'])
-const showToast = ref(false)
-const toastText = ref('')
 const menuItems = ref<{ id: number; name: string; price: number; image: string | null , categoryId: number | null}[]>([])
+
+const cart = useCartStore()
 
 function handleClick(id: number) {
   emit('open', id)
 }
 
-function addToCart(name: string) {
-  toastText.value = `${name} додана до кошика!`
-  showToast.value = true
-  setTimeout(() => {
-    showToast.value = false
-  }, 1000)
+function addToCart(item: { id: number, name: string, price: number }) {
+  cart.addToCart(item)
+}
+
+function increase(item: { id: number, name: string, price: number }) {
+  cart.changeQuantity(item.id, 1)
+}
+function decrease(item: { id: number, name: string, price: number }) {
+  const found = cart.items.find(i => i.id === item.id)
+  if (found && found.quantity <= 1) {
+    cart.removeFromCart(item.id)
+  } else {
+    cart.changeQuantity(item.id, -1)
+  }
+}
+
+function getCartQuantity(id: number) {
+  const found = cart.items.find(i => i.id === id)
+  return found ? found.quantity : 0
 }
 
 // Загружаем данные с API
@@ -31,14 +45,6 @@ onMounted(async () => {
 
 <template>
   <div class="container mx-auto mt-8">
-    <!-- Toast -->
-    <div
-      v-if="showToast"
-      class="fixed top-8 left-1/2 -translate-x-1/2 bg-pink-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition"
-    >
-      {{ toastText }}
-    </div>
-
     <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
       <UCard
         v-for="item in menuItems"
@@ -61,13 +67,36 @@ onMounted(async () => {
           </p>
         </div>
         <template #footer>
-          <div class="flex justify-center">
-            <UButton
-              class="bg-pink-500 text-white font-bold rounded px-8 py-2 shadow hover:bg-pink-600 transition mt-2 cursor-pointer"
-              @click.stop="addToCart(item.name)"
-            >
-              До кошика
-            </UButton>
+          <div class="flex justify-center items-center min-h-[48px]">
+            <template v-if="getCartQuantity(item.id) === 0">
+              <UButton
+                class="bg-pink-500 text-white font-bold rounded px-8 py-2 shadow hover:bg-pink-600 transition mt-2 cursor-pointer"
+                @click.stop="addToCart(item)"
+              >
+                До кошика
+              </UButton>
+            </template>
+            <template v-else>
+              <div class="flex items-center gap-2 bg-pink-50 rounded-lg px-3 py-2 shadow mt-2">
+                <UButton
+                  icon="i-heroicons-minus"
+                  size="sm"
+                  variant="solid"
+                  class="rounded-full bg-pink-500 hover:bg-pink-600"
+                  @click.stop="decrease(item)"
+                />
+                <span class="text-lg font-semibold text-pink-700 min-w-[24px] text-center select-none">
+                  {{ getCartQuantity(item.id) }}
+                </span>
+                <UButton
+                  icon="i-heroicons-plus"
+                  size="sm"
+                  variant="solid"
+                  class="rounded-full bg-pink-500 hover:bg-pink-600"
+                  @click.stop="increase(item)"
+                />
+              </div>
+            </template>
           </div>
         </template>
       </UCard>
