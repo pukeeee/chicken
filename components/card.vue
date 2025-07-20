@@ -4,7 +4,7 @@ import { ref, onMounted } from 'vue'
 const emit = defineEmits(['open'])
 const showToast = ref(false)
 const toastText = ref('')
-const menuItems = ref<{ id: number; name: string; description: string | null; price: number; image: string | null }[]>([])
+const menuItems = ref<{ id: number; name: string; price: number; image: string | null , categoryId: number | null}[]>([])
 
 function handleClick(id: number) {
   emit('open', id)

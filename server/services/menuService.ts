@@ -2,8 +2,9 @@ import { getAllProducts, getProductById } from '../models/menuModel'
 
 // Сервис для получения всех продуктов
 export async function fetchAllProducts() {
-  // Можно добавить бизнес-логику, фильтры и т.д.
-  return getAllProducts()
+  const products = await getAllProducts()
+
+  return products.map(({ id, name, price, image, categoryId}) => ({id, name, price, image, categoryId}))
 }
 
 // Сервис для получения продукта по id
