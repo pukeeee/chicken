@@ -64,7 +64,7 @@ model OrderItem {
 model Payment {
   id        Int      @id @default(autoincrement())
   order     Order    @relation(fields: [orderId], references: [id])
-  orderId   Int
+  orderId   Int      @unique
   amount    Float
   status    String   @default("pending") // можно enum
   createdAt DateTime @default(now())

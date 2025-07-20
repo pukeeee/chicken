@@ -11,13 +11,13 @@ SQL
 docker ps
 ```
 ```bash
-docker exec -it myproject_postgres_1 psql -U postgres -d kurochka
+docker exec -it kurochka-postgres-1 psql -U postgres -d kurochka
 ```
 ```sql
 SELECT * FROM "User";
 ```
 ---
 ```bash
-alias dbshell='docker exec -it myproject_postgres_1 psql -U postgres -d myapp'
+alias dbshell='docker exec -it kurochka-postgres-1 psql -U postgres -d myapp'
 dbshell
 ```

@@ -21,7 +21,9 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/mydb?schema=public
     volumes:
       - .:/app
-    command: sh -c "npx prisma migrate deploy && npx prisma db seed && npm run dev"
+      - /app/node_modules
+    command: sh -c "npx prisma generate && npx prisma migrate dev && npx prisma db seed && npm run dev"
+    platform: linux/arm64
 
 volumes:
   pgdata:

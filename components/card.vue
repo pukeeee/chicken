@@ -4,7 +4,7 @@ import { ref, onMounted } from 'vue'
 const emit = defineEmits(['open'])
 const showToast = ref(false)
 const toastText = ref('')
-const menuItems = ref<{ id: number; name: string; description: string; price: number; image_url: string }[]>([])
+const menuItems = ref<{ id: number; name: string; description: string | null; price: number; image: string | null }[]>([])
 
 function handleClick(id: number) {
   emit('open', id)
@@ -48,7 +48,7 @@ onMounted(async () => {
       >
         <template #header>
           <img
-            :src="item.image_url"
+            :src="item.image || '/logo.png'"
             :alt="item.name"
             class="w-full h-64 object-top rounded-t-lg"
           />
