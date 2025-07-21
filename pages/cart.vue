@@ -3,16 +3,6 @@ import { useCartStore } from '~/stores/cart'
 
 const cart = useCartStore()
 
-// Заглушки для кнопок
-function onIncrease(item) {
-  console.log(`Збільшити кількість для: ${item.name}`)
-}
-function onDecrease(item) {
-  console.log(`Зменшити кількість для: ${item.name}`)
-}
-function onRemove(item) {
-  console.log(`Видалити з кошика: ${item.name}`)
-}
 function onCheckout() {
   console.log('Завершити замовлення')
 }

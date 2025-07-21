@@ -11,3 +11,12 @@ export async function getProductById(id: number) {
     where: { id }
   })
 }
+
+// Получить все категории меню
+export async function getAllCategoriesWithProducts() {
+  return prisma.category.findMany({
+    include: {
+      products: true
+    }
+  })
+}

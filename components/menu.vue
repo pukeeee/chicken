@@ -1,24 +1,25 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
 import { useCartStore } from '~/stores/cart'
+import type { MenuItem } from '~/dto/types'
+
+const props = defineProps<{
+  items: MenuItem[]
+}>()
 
 const emit = defineEmits(['open'])
-const menuItems = ref<{ id: number; name: string; price: number; image: string | null , categoryId: number | null}[]>([])
-
 const cart = useCartStore()
 
 function handleClick(id: number) {
   emit('open', id)
 }
 
-function addToCart(item: { id: number, name: string, price: number }) {
+function addToCart(item: { id: number; name: string; price: number }) {
   cart.addToCart(item)
 }
-
-function increase(item: { id: number, name: string, price: number }) {
+function increase(item: { id: number; name: string; price: number }) {
   cart.changeQuantity(item.id, 1)
 }
-function decrease(item: { id: number, name: string, price: number }) {
+function decrease(item: { id: number; name: string; price: number }) {
   const found = cart.items.find(i => i.id === item.id)
   if (found && found.quantity <= 1) {
     cart.removeFromCart(item.id)
@@ -26,37 +27,26 @@ function decrease(item: { id: number, name: string, price: number }) {
     cart.changeQuantity(item.id, -1)
   }
 }
-
 function getCartQuantity(id: number) {
   const found = cart.items.find(i => i.id === id)
   return found ? found.quantity : 0
 }
-
-// Загружаем данные с API
-onMounted(async () => {
-  try {
-    const { data } = await $fetch('/api/menu')
-    menuItems.value = data
-  } catch (error) {
-    console.error('Ошибка загрузки меню:', error)
-  }
-})
 </script>
 
 <template>
   <div class="container mx-auto mt-8">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
       <UCard
-        v-for="item in menuItems"
+        v-for="item in items"
         :key="item.id"
-        class="hover:shadow-xl transition-shadow cursor-pointer border-2 border-pink-300"
+        class="hover:shadow-xl transition-shadow cursor-pointer border-2 border-pink-300 max-w-xs w-full mx-auto"
         @click="handleClick(item.id)"
       >
         <template #header>
           <img
             :src="item.image || '/logo.png'"
             :alt="item.name"
-            class="w-full h-64 object-top rounded-t-lg"
+            class="w-full h-48 object-contain rounded-t-lg"
           />
         </template>
         <div class="flex flex-col gap-2">
