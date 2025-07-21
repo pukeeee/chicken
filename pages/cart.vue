@@ -9,9 +9,10 @@ function onCheckout() {
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto py-10">
+  <div class="max-w-3xl mx-auto py-10 px-2">
     <h1 class="text-2xl font-bold mb-6">Кошик</h1>
-    <div class="overflow-x-auto rounded-lg shadow">
+    <!-- Desktop table -->
+    <div class="overflow-x-auto rounded-lg shadow hidden sm:block">
       <table class="min-w-full bg-white">
         <thead>
           <tr class="bg-gray-100">
@@ -57,14 +58,58 @@ function onCheckout() {
         </tbody>
       </table>
     </div>
-    <div class="flex justify-end mt-4 text-xl font-bold">
-      Всього: {{ cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0) }} ₴
+    <!-- Mobile cards -->
+    <div class="flex flex-col gap-4 sm:hidden">
+      <div
+        v-for="item in cart.items"
+        :key="item.id"
+        class="bg-white rounded-lg shadow p-4 flex flex-col gap-2"
+      >
+        <div class="flex justify-between items-center">
+          <span class="font-bold text-pink-700">{{ item.name }}</span>
+          <UButton
+            variant="solid"
+            icon="i-heroicons-trash"
+            size="sm"
+            class="transition bg-pink-500 hover:bg-pink-600"
+            @click="cart.removeFromCart(item.id)"
+          />
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-gray-600">Ціна:</span>
+          <span class="font-semibold text-pink-600">{{ item.price * item.quantity }} ₴</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-gray-600">Кількість:</span>
+          <div class="flex items-center gap-2">
+            <UButton
+              variant="solid"
+              icon="i-heroicons-minus"
+              size="sm"
+              class="rounded-full bg-pink-500 hover:bg-pink-600"
+              @click="cart.changeQuantity(item.id, -1)"
+            />
+            <span class="mx-2">{{ item.quantity }}</span>
+            <UButton
+              variant="solid"
+              icon="i-heroicons-plus"
+              size="sm"
+              class="rounded-full bg-pink-500 hover:bg-pink-600"
+              @click="cart.changeQuantity(item.id, 1)"
+            />
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="flex justify-end mt-6">
+    <!-- Итог и кнопка -->
+    <div class="flex flex-col items-end mt-6 gap-4">
+      <div class="text-xl font-bold">
+        Всього: {{ cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0) }} ₴
+      </div>
       <UButton
         color="primary"
         size="lg"
-        class="px-8 py-2 bg-pink-500 hover:bg-pink-600"
+        class="px-8 py-2 bg-pink-500 hover:bg-pink-600 w-full sm:w-auto"
         @click="onCheckout"
       >Завершити замовлення</UButton>
     </div>
