@@ -2,10 +2,8 @@ services:
   postgres:
     image: postgres:15
     restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: mydb
+    env_file:
+      - .env
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -17,13 +15,12 @@ services:
       - "3000:3000"
     depends_on:
       - postgres
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/mydb?schema=public
+    env_file:
+      - .env
     volumes:
       - .:/app
       - /app/node_modules
-    command: sh -c "npx prisma generate && npm run dev"
+    command: sh -c "npm run dev"
     platform: linux/arm64
-# npx prisma migrate dev && npx prisma db seed && 
 volumes:
   pgdata:

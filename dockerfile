@@ -13,6 +13,9 @@ RUN npm install
 # Копируем все остальные файлы проекта
 COPY . .
 
+# Генерируем Prisma Client
+RUN npx prisma generate
+
 # Открываем порт (по умолчанию Nuxt слушает 3000)
 EXPOSE 3000
 

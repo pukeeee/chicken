@@ -1,23 +1,25 @@
 ## Setup
 
 ```bash
-docker-compose up --build
+docker-compose up -d --build
+```
+```bash
+docker-compose exec app npx prisma migrate dev
+docker-compose exec app npx prisma db seed
+```
+
+---
+
+```bash
+docker ps
 ```
 
 ---
 
 SQL
 ```bash
-docker ps
-```
-```bash
 docker exec -it kurochka-postgres-1 psql -U postgres -d mydb
 ```
 ```sql
 SELECT * FROM "User";
-```
----
-```bash
-alias dbshell='docker exec -it kurochka-postgres-1 psql -U postgres -d mydb'
-dbshell
 ```
