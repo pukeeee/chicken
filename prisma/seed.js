@@ -28,6 +28,7 @@ async function main() {
       name: 'Admin',
       role: 'ADMIN',
       token: 'dev-token-123',
+      password: '$2b$10$oxwSBvR4ioJsByUxfbUggO8mWGv.qLFXLv4ku/E0T1h24Km/f8puG' // password
     },
   })
 }

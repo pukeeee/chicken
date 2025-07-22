@@ -30,7 +30,7 @@ const items = ref<DropdownMenuItem[]>([
 </script>
 
 <template>
-  <header class="h-15 flex justify-between items-center px-4 py-2 bg-pink-300 shadow-md">
+  <header class="h-15 flex justify-between items-center px-4 py-2 bg-amber-300 shadow-md">
     <h1 class="text-xl font-bold text-white flex items-center gap-2">
       <img src="/logo.png" alt="Лого" class="w-10 h-10 object-contain" />
       Кур0чка
@@ -38,11 +38,11 @@ const items = ref<DropdownMenuItem[]>([
     <!-- Десктоп меню -->
     <nav class="hidden sm:flex gap-4">
       <div class="mr-4">
-        <UButton to="/" class="bg-pink-500 mr-4 hover:bg-pink-600">Меню</UButton>
-        <UButton to="/delivery" class="bg-pink-500 hover:bg-pink-600">Доставка</UButton>
+        <UButton to="/" class="bg-amber-500 mr-4 hover:bg-amber-600">Меню</UButton>
+        <UButton to="/delivery" class="bg-amber-500 hover:bg-amber-600">Доставка</UButton>
       </div>
-      <UButton to="/cart" class="bg-pink-500 hover:bg-pink-600" icon="i-heroicons-shopping-cart" />
-      <UButton to="/signup" class="bg-pink-500 hover:bg-pink-600">Увійти</UButton>
+      <UButton to="/cart" class="bg-amber-500 hover:bg-amber-600" icon="i-heroicons-shopping-cart" />
+      <UButton to="/signup" class="bg-amber-500 hover:bg-amber-600">Увійти</UButton>
     </nav>
     <!-- Мобильное меню (бургер через UDropdownMenu) -->
     <ClientOnly>
@@ -52,15 +52,15 @@ const items = ref<DropdownMenuItem[]>([
           :items="items"
           :content="{ align: 'end', side: 'bottom', sideOffset: 8 }"
           :ui="{
-            content: 'bg-pink-100 text-pink-900',
-            item: 'hover:bg-pink-200',
-            itemLeadingIcon: 'text-pink-500'
+            content: 'bg-amber-100 text-amber-900',
+            item: 'hover:bg-amber-200',
+            itemLeadingIcon: 'text-amber-500'
           }"
           :overlay="false"
         >
           <UButton
             icon="i-lucide-menu"
-            class="bg-pink-500 hover:bg-pink-600 text-white"
+            class="bg-amber-500 hover:bg-amber-600 text-white"
             variant="solid"
             @click.stop
           />

@@ -39,7 +39,7 @@ function getCartQuantity(id: number) {
       <UCard
         v-for="item in items"
         :key="item.id"
-        class="hover:shadow-xl transition-shadow cursor-pointer border-2 border-pink-300 max-w-xs w-full mx-auto"
+        class="hover:shadow-xl transition-shadow cursor-pointer border-2 border-amber-300 max-w-xs w-full mx-auto"
         @click="handleClick(item.id)"
       >
         <template #header>
@@ -50,39 +50,39 @@ function getCartQuantity(id: number) {
           />
         </template>
         <div class="flex flex-col gap-2">
-          <h3 class="text-2xl font-bold text-pink-700">{{ item.name }}</h3>
+          <h3 class="text-2xl font-bold text-amber-700">{{ item.name }}</h3>
           <p class="text-gray-600">
             Ціна:
-            <span class="font-semibold text-pink-600">{{ item.price }}₴</span>
+            <span class="font-semibold text-amber-600">{{ item.price }}₴</span>
           </p>
         </div>
         <template #footer>
           <div class="flex justify-center items-center min-h-[48px]">
             <template v-if="getCartQuantity(item.id) === 0">
               <UButton
-                class="bg-pink-500 text-white font-bold rounded px-8 py-2 shadow hover:bg-pink-600 transition mt-2 cursor-pointer"
+                class="bg-amber-500 text-white font-bold rounded px-8 py-2 shadow hover:bg-amber-600 transition mt-2 cursor-pointer"
                 @click.stop="addToCart(item)"
               >
                 До кошика
               </UButton>
             </template>
             <template v-else>
-              <div class="flex items-center gap-2 bg-pink-50 rounded-lg px-3 py-2 shadow mt-2">
+              <div class="flex items-center gap-2 bg-amber-50 rounded-lg px-3 py-2 shadow mt-2">
                 <UButton
                   icon="i-heroicons-minus"
                   size="sm"
                   variant="solid"
-                  class="rounded-full bg-pink-500 hover:bg-pink-600"
+                  class="rounded-full bg-amber-500 hover:bg-amber-600"
                   @click.stop="decrease(item)"
                 />
-                <span class="text-lg font-semibold text-pink-700 min-w-[24px] text-center select-none">
+                <span class="text-lg font-semibold text-amber-700 min-w-[24px] text-center select-none">
                   {{ getCartQuantity(item.id) }}
                 </span>
                 <UButton
                   icon="i-heroicons-plus"
                   size="sm"
                   variant="solid"
-                  class="rounded-full bg-pink-500 hover:bg-pink-600"
+                  class="rounded-full bg-amber-500 hover:bg-amber-600"
                   @click.stop="increase(item)"
                 />
               </div>

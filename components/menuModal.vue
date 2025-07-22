@@ -40,29 +40,29 @@ watch(
 
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm" @click.self="close">
-    <div class="relative bg-white border-2 border-pink-300 rounded-2xl shadow-2xl max-w-lg w-full p-6 flex flex-col md:flex-row gap-6 animate-fade-in">
+    <div class="relative bg-white border-2 border-amber-300 rounded-2xl shadow-2xl max-w-lg w-full p-6 flex flex-col md:flex-row gap-6 animate-fade-in">
       <!-- Кнопка закрытия -->
       <button
-        class="absolute top-4 right-4 text-pink-500 hover:text-pink-700 text-3xl font-bold transition"
+        class="absolute top-4 right-4 text-amber-500 hover:text-amber-700 text-3xl font-bold transition"
         @click="close"
         aria-label="Закрыть"
       >&times;</button>
       <!-- Картинка -->
       <img
         v-if="menuItem"
-        class="w-40 h-60 object-cover object-top rounded-xl border border-pink-200 shadow md:w-40 md:h-60 w-full max-w-xs"
+        class="w-40 h-60 object-cover object-top rounded-xl border border-amber-200 shadow md:w-40 md:h-60 w-full max-w-xs"
         :src="menuItem.image"
         :alt="menuItem.name"
       />
       <!-- Информация -->
       <div v-if="menuItem" class="flex-1 flex flex-col justify-between">
         <div>
-          <h2 class="text-3xl font-extrabold text-pink-700 mb-2">{{ menuItem.name }}</h2>
+          <h2 class="text-3xl font-extrabold text-amber-700 mb-2">{{ menuItem.name }}</h2>
           <p class="text-gray-700 mb-4">{{ menuItem.description }}</p>
-          <div class="text-lg font-semibold text-pink-600 mb-4">Ціна: <b>{{ menuItem.price }}₴</b></div>
+          <div class="text-lg font-semibold text-amber-600 mb-4">Ціна: <b>{{ menuItem.price }}₴</b></div>
         </div>
         <UButton
-          class="bg-pink-500 text-white font-bold rounded-lg px-8 py-3 shadow hover:bg-pink-600 transition w-full"
+          class="bg-amber-500 text-white font-bold rounded-lg px-8 py-3 shadow hover:bg-amber-600 transition w-full"
           icon="i-heroicons-shopping-cart"
         >
           До кошика

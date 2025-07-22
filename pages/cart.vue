@@ -31,7 +31,7 @@ function onCheckout() {
                   variant="solid"
                   icon="i-heroicons-minus"
                   size="sm"
-                  class="transition rounded-full bg-pink-500 hover:bg-pink-600"
+                  class="transition rounded-full bg-amber-500 hover:bg-amber-600"
                   @click="cart.changeQuantity(item.id, -1)"
                 />
                 <span class="mx-2">{{ item.quantity }}</span>
@@ -39,7 +39,7 @@ function onCheckout() {
                   variant="solid"
                   icon="i-heroicons-plus"
                   size="sm"
-                  class="transition rounded-full bg-pink-500 hover:bg-pink-600"
+                  class="transition rounded-full bg-amber-500 hover:bg-amber-600"
                   @click="cart.changeQuantity(item.id, 1)"
                 />
               </div>
@@ -50,7 +50,7 @@ function onCheckout() {
                 variant="solid"
                 icon="i-heroicons-trash"
                 size="sm"
-                class="px-4 transition bg-pink-500 hover:bg-pink-600"
+                class="px-4 transition bg-amber-500 hover:bg-amber-600"
                 @click="cart.removeFromCart(item.id)"
               />
             </td>
@@ -66,18 +66,18 @@ function onCheckout() {
         class="bg-white rounded-lg shadow p-4 flex flex-col gap-2"
       >
         <div class="flex justify-between items-center">
-          <span class="font-bold text-pink-700">{{ item.name }}</span>
+          <span class="font-bold text-amber-700">{{ item.name }}</span>
           <UButton
             variant="solid"
             icon="i-heroicons-trash"
             size="sm"
-            class="transition bg-pink-500 hover:bg-pink-600"
+            class="transition bg-amber-500 hover:bg-amber-600"
             @click="cart.removeFromCart(item.id)"
           />
         </div>
         <div class="flex items-center justify-between">
           <span class="text-gray-600">Ціна:</span>
-          <span class="font-semibold text-pink-600">{{ item.price * item.quantity }} ₴</span>
+          <span class="font-semibold text-amber-600">{{ item.price * item.quantity }} ₴</span>
         </div>
         <div class="flex items-center justify-between">
           <span class="text-gray-600">Кількість:</span>
@@ -86,7 +86,7 @@ function onCheckout() {
               variant="solid"
               icon="i-heroicons-minus"
               size="sm"
-              class="rounded-full bg-pink-500 hover:bg-pink-600"
+              class="rounded-full bg-amber-500 hover:bg-amber-600"
               @click="cart.changeQuantity(item.id, -1)"
             />
             <span class="mx-2">{{ item.quantity }}</span>
@@ -94,7 +94,7 @@ function onCheckout() {
               variant="solid"
               icon="i-heroicons-plus"
               size="sm"
-              class="rounded-full bg-pink-500 hover:bg-pink-600"
+              class="rounded-full bg-amber-500 hover:bg-amber-600"
               @click="cart.changeQuantity(item.id, 1)"
             />
           </div>
@@ -109,7 +109,7 @@ function onCheckout() {
       <UButton
         color="primary"
         size="lg"
-        class="px-8 py-2 bg-pink-500 hover:bg-pink-600 w-full sm:w-auto"
+        class="px-8 py-2 bg-amber-500 hover:bg-amber-600 w-full sm:w-auto"
         @click="onCheckout"
       >Завершити замовлення</UButton>
     </div>

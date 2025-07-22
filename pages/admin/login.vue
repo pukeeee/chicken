@@ -22,12 +22,12 @@ function login() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-pink-50">
+  <div class="min-h-screen flex items-center justify-center bg-amber-50">
     <form
       class="bg-white p-8 rounded-lg shadow-md w-full max-w-xs flex flex-col gap-4"
       @submit.prevent="login"
     >
-      <h2 class="text-2xl font-bold text-pink-600 text-center mb-2">Вхід в адмінку</h2>
+      <h2 class="text-2xl font-bold text-amber-600 text-center mb-2">Вхід в адмінку</h2>
       <UInput
         v-model="username"
         placeholder="Логін"
@@ -47,7 +47,7 @@ function login() {
       <UButton
         type="submit"
         color="primary"
-        class="bg-pink-500 hover:bg-pink-600 w-full"
+        class="bg-amber-500 hover:bg-amber-600 w-full"
         size="lg"
       >
         Увійти
