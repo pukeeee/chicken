@@ -1,4 +1,7 @@
 import { defineStore } from 'pinia'
+import { StorageService } from '../server/services/storageService'
+
+const CART_STORAGE_KEY = 'cart'
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
@@ -26,12 +29,12 @@ export const useCartStore = defineStore('cart', {
       }
     },
     saveToLocalStorage() {
-      localStorage.setItem('cart', JSON.stringify(this.items))
+      StorageService.setItem(CART_STORAGE_KEY, this.items)
     },
     loadFromLocalStorage() {
-      const data = localStorage.getItem('cart')
+      const data = StorageService.getItem<typeof this.items>(CART_STORAGE_KEY)
       if (data) {
-        this.items = JSON.parse(data)
+        this.items = data
       }
     }
   }

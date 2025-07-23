@@ -1,22 +1,33 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import adminMiddleware from '~/middlewares/admin'
+import { StorageService } from '~/server/services/storageService'
 
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin',
+  middleware: [adminMiddleware]
 })
 
-const username = ref('')
+const email = ref('')
 const password = ref('')
 const error = ref('')
 
-function login() {
-  // Пример простой проверки (замени на свой API-запрос)
-  if (username.value === 'admin' && password.value === '1234') {
-    error.value = ''
-    // Здесь можно сделать редирект или сохранить токен
-    alert('Вход выполнен!')
-  } else {
-    error.value = 'Невірний логін або пароль'
+async function login() {
+  try {
+    const response = await $fetch<{ token: string }>('/api/admin/login', {
+      method: 'POST',
+      body: { 
+        email: email.value, 
+        password: password.value 
+      }
+    })
+
+    StorageService.setItem('adminToken', response.token)
+
+    navigateTo('/admin')
+  }
+  catch (err: any) {
+    error.value = err.data?.message || 'Помилка входу'
   }
 }
 </script>
@@ -29,7 +40,7 @@ function login() {
     >
       <h2 class="text-2xl font-bold text-amber-600 text-center mb-2">Вхід в адмінку</h2>
       <UInput
-        v-model="username"
+        v-model="email"
         placeholder="Логін"
         icon="i-heroicons-user"
         size="lg"

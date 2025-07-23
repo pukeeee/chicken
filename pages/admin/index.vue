@@ -1,6 +1,9 @@
 <script setup>
+import adminMiddleware from '~/middlewares/admin'
+
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin',
+  middleware: [adminMiddleware]
 })
 </script>
 
