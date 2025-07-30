@@ -1,41 +1,49 @@
 import { defineStore } from 'pinia'
-import { StorageService } from '../server/services/storageService'
-
-const CART_STORAGE_KEY = 'cart'
+import { CartService } from '~/server/services/cartService'
+import type { CartItem, CartState } from '~/types/cart'
 
 export const useCartStore = defineStore('cart', {
-  state: () => ({
-    items: [] as { id: number, name: string, price: number, quantity: number }[],
+  state: (): CartState => ({
+    items: []
   }),
+
+  getters: {
+    totalPrice: (state): number => CartService.getTotalPrice(state.items),
+    totalItems: (state): number => CartService.getTotalItems(state.items),
+    isEmpty: (state): boolean => state.items.length === 0
+  },
+
   actions: {
-    addToCart(product: { id: number, name: string, price: number }) {
-      const existing = this.items.find(item => item.id === product.id)
-      if (existing) {
-        existing.quantity += 1
-      } else {
-        this.items.push({ ...product, quantity: 1 })
-      }
-      this.saveToLocalStorage()
+    addToCart(product: { id: number; name: string; price: number }) {
+      this.items = CartService.addToCart(this.items, product)
+      CartService.saveToStorage(this.items)
     },
+
     removeFromCart(id: number) {
-      this.items = this.items.filter(item => item.id !== id)
-      this.saveToLocalStorage()
+      this.items = CartService.removeFromCart(this.items, id)
+      CartService.saveToStorage(this.items)
     },
+
     changeQuantity(id: number, delta: number) {
-      const item = this.items.find(item => item.id === id)
-      if (item) {
-        item.quantity = Math.max(1, item.quantity + delta)
-        this.saveToLocalStorage()
-      }
+      this.items = CartService.changeQuantity(this.items, id, delta)
+      CartService.saveToStorage(this.items)
     },
-    saveToLocalStorage() {
-      StorageService.setItem(CART_STORAGE_KEY, this.items)
+
+    getCartQuantity(id: number): number {
+      return CartService.getCartQuantity(this.items, id)
     },
-    loadFromLocalStorage() {
-      const data = StorageService.getItem<typeof this.items>(CART_STORAGE_KEY)
-      if (data) {
-        this.items = data
-      }
+
+    clearCart() {
+      this.items = []
+      CartService.clearStorage()
+    },
+
+    loadFromStorage() {
+      this.items = CartService.loadFromStorage()
+    },
+
+    initialize() {
+      this.loadFromStorage()
     }
   }
 })

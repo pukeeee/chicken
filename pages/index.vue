@@ -4,7 +4,7 @@ import type { TabsItem } from '@nuxt/ui'
 import Menu from '~/components/menu.vue'
 import MenuModal from '~/components/menuModal.vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { Product, Category } from '~/dto/types'
+import type { Product, Category } from '../types/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -29,9 +29,9 @@ const tabItems = shallowRef<TabsItem[]>([])
 const selectedTab = ref(0)
 
 onMounted(async () => {
-  const { data } = await $fetch('/api/menu')
+  const { data } = await $fetch<{ success: boolean; data: Category[] }>('/api/menu')
   categories.value = data
-  tabItems.value = data.map((cat: any) => ({
+  tabItems.value = data.map((cat: Category) => ({
     label: cat.name
   }))
   selectedTab.value = 0

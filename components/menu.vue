@@ -1,35 +1,29 @@
 <script setup lang="ts">
-import { useCartStore } from '~/stores/cart'
-import type { MenuItem } from '~/dto/types'
+import { useCart } from '~/composables/useCart';
+import type { MenuItem } from '~/types/types'
 
 const props = defineProps<{
   items: MenuItem[]
 }>()
 
 const emit = defineEmits(['open'])
-const cart = useCartStore()
+const { addToCart, changeQuantity, removeFromCart, getCartQuantity } = useCart()
 
 function handleClick(id: number) {
   emit('open', id)
 }
 
-function addToCart(item: { id: number; name: string; price: number }) {
-  cart.addToCart(item)
-}
 function increase(item: { id: number; name: string; price: number }) {
-  cart.changeQuantity(item.id, 1)
+  changeQuantity(item.id, 1)
 }
+
 function decrease(item: { id: number; name: string; price: number }) {
-  const found = cart.items.find(i => i.id === item.id)
-  if (found && found.quantity <= 1) {
-    cart.removeFromCart(item.id)
+  const quantity = getCartQuantity(item.id)
+  if (quantity <= 1) {
+    removeFromCart(item.id)
   } else {
-    cart.changeQuantity(item.id, -1)
+    changeQuantity(item.id, -1)
   }
-}
-function getCartQuantity(id: number) {
-  const found = cart.items.find(i => i.id === id)
-  return found ? found.quantity : 0
 }
 </script>
 

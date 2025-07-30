@@ -1,11 +1,11 @@
 <script setup>
-    import Navbar from '~/components/navbar.vue'
+    import Header from '~/components/header.vue'
     import Footer from '~/components/footer.vue'
 </script>
 
 <template>
     <div>
-        <Navbar />
+        <Header />
         <NuxtPage />
         <Footer />
     </div>

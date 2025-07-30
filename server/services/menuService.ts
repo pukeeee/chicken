@@ -1,4 +1,4 @@
-import { getAllProducts, getProductById, getAllCategoriesWithProducts } from '../models/menuModel'
+import { getAllProducts, getProductById, getAllCategoriesWithProducts } from '../repositories/menu.repository'
 
 // Сервис для получения всех продуктов
 export async function fetchAllProducts() {

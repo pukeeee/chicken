@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import adminMiddleware from '~/middlewares/admin'
-import { StorageService } from '~/server/services/storageService'
 
 definePageMeta({
-  layout: 'admin',
-  middleware: [adminMiddleware]
+  layout: 'admin'
 })
 
 const email = ref('')
@@ -14,7 +11,7 @@ const error = ref('')
 
 async function login() {
   try {
-    const response = await $fetch<{ token: string }>('/api/admin/login', {
+    await $fetch('/api/admin/login', {
       method: 'POST',
       body: { 
         email: email.value, 
@@ -22,8 +19,7 @@ async function login() {
       }
     })
 
-    StorageService.setItem('adminToken', response.token)
-
+    // После успешного логина перенаправляем на админку
     navigateTo('/admin')
   }
   catch (err: any) {

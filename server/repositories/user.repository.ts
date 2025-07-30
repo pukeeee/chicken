@@ -13,9 +13,15 @@ export async function getUserById(id: number) {
 }
 
 export async function setToken(id: number, token: string) {
-    console.log('Saving token to DB:', { id, token })
     return await prisma.user.update({
         where: {id},
         data: {token}
+    })
+}
+
+export async function removeToken(id: number) {
+    return await prisma.user.update({
+        where: {id},
+        data: {token: null}
     })
 }

@@ -1,16 +1,16 @@
-import { getUserByEmail, setToken } from '../models/userModel'
-import { compare } from '../../utils/bcrypt'
-import { createToken } from '../services/jwt'
+import { getUserByEmail, setToken } from '../repositories/user.repository'
+import { compare } from '../../server/utils/bcrypt'
+import { createToken } from '../utils/jwt'
 
 export const adminLogin = async (email: string, password: string) => {
     const admin = await getUserByEmail(email)
 
     if (!admin || admin.role !== 'ADMIN' || !admin.password) {
-        console.log('Admin check failed:', { 
-            exists: !!admin, 
-            role: admin?.role, 
-            hasPassword: !!admin?.password 
-        })
+        // console.log('Admin check failed:', { 
+        //     exists: !!admin, 
+        //     role: admin?.role, 
+        //     hasPassword: !!admin?.password 
+        // })
         throw createError({
             statusCode: 401,
             message: 'Invalid credentials',
@@ -19,7 +19,7 @@ export const adminLogin = async (email: string, password: string) => {
     }
 
     const validPassword = await compare(password, admin.password)
-    console.log('Password check:', { valid: validPassword })
+    // console.log('Password check:', { valid: validPassword })
     
     if (!validPassword) {
         throw createError({
@@ -30,7 +30,7 @@ export const adminLogin = async (email: string, password: string) => {
     }
 
     const token = createToken({ id: admin.id, role: admin.role })
-    console.log('Created token:', token)
+    // console.log('Created token:', token)
     
     // Обновляем токен в базе данных
     await setToken(admin.id, token)
