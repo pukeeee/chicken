@@ -6,6 +6,14 @@ import MenuModal from '~/components/menuModal.vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Product, Category } from '../types/types'
 
+// Meta для страницы
+useHead({
+  titleTemplate: 'Kurochka Menu',
+  meta: [
+    { name: 'robots', content: 'noindex, nofollow' }
+  ]
+})
+
 const route = useRoute()
 const router = useRouter()
 

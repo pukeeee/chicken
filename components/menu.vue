@@ -38,7 +38,7 @@ function decrease(item: { id: number; name: string; price: number }) {
       >
         <template #header>
           <img
-            :src="item.image || '/logo.png'"
+            :src="`/images/menu/${item.image}`"
             :alt="item.name"
             class="w-full h-48 object-contain rounded-t-lg"
           />

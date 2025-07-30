@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin-login'
 })
 
 const email = ref('')

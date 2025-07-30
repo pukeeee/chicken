@@ -32,8 +32,8 @@ const items = ref<DropdownMenuItem[]>([
 <template>
   <header class="h-15 flex justify-between items-center px-4 py-2 bg-amber-300 shadow-md">
     <h1 class="text-xl font-bold text-white flex items-center gap-2">
-      <img src="/logo.png" alt="Лого" class="w-10 h-10 object-contain" />
-      Кур0чка
+      <img src="/images/logo.png" alt="Лого" class="w-10 h-10 object-contain" />
+      Chicken
     </h1>
     <!-- Десктоп меню -->
     <nav class="hidden sm:flex gap-4">

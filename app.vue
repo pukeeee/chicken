@@ -1,6 +1,5 @@
 <script setup>
 import { onMounted } from 'vue'
-import { useCartStore } from '~/stores/cart'
 
 onMounted(() => {
   useCart()
@@ -8,5 +7,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <NuxtLayout />
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>
