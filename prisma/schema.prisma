@@ -9,10 +9,11 @@ datasource db {
 
 model User {
   id        Int       @id @default(autoincrement())
-  email     String    @unique
+  email     String?   @unique
   name      String?
-  phone     String?
-  password  String?
+  phone     String    @unique
+  password  String    @default(null)
+  isActive  Bool      @default(true)
   token     String?   @unique
   role      Role      @default(USER)
   createdAt DateTime  @default(now())
@@ -30,6 +31,7 @@ model Product {
   description String?
   price       Float
   image       String?
+  isActive    Bool        @default(true)
   createdAt   DateTime    @default(now())
   category    Category?   @relation(fields: [categoryId], references: [id])
   categoryId  Int?
@@ -42,14 +44,40 @@ model Category {
   products Product[]
 }
 
+enum OrderStatus {
+  PENDING
+  PREPARING
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  ONLINE
+}
+
 model Order {
-  id         Int         @id @default(autoincrement())
-  user       User?       @relation(fields: [userId], references: [id])
-  userId     Int?
-  createdAt  DateTime    @default(now())
-  status     String      @default("pending") // можно enum
-  items      OrderItem[]
-  payment    Payment?
+  id              Int           @id @default(autoincrement())
+  user            User?         @relation(fields: [userId], references: [id])
+  userId          Int?
+  customerName    String?
+  customerPhone   String?
+  deliveryAddress String?
+  paymentMethod   PaymentMethod @default(CASH)
+  status          OrderStatus   @default(PENDING)
+  total           Float         @default(0)
+  createdAt       DateTime      @default(now())
+  items           OrderItem[]
+  payment         Payment?
 }
 
 model OrderItem {
@@ -63,10 +91,11 @@ model OrderItem {
 }
 
 model Payment {
-  id        Int      @id @default(autoincrement())
-  order     Order    @relation(fields: [orderId], references: [id])
-  orderId   Int      @unique
+  id        Int           @id @default(autoincrement())
+  order     Order         @relation(fields: [orderId], references: [id])
+  orderId   Int           @unique
   amount    Float
-  status    String   @default("pending") // можно enum
-  createdAt DateTime @default(now())
+  method    PaymentMethod @default(CASH)
+  status    PaymentStatus @default(PENDING)
+  createdAt DateTime      @default(now())
 }
