@@ -71,11 +71,7 @@ const refreshData = async () => {
 <template>
   <div class="space-y-6">
     <!-- Заголовок дашборда -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Добро пожаловать в админ панель! 👋</h1>
-        <p class="text-gray-600 mt-1">Вот краткий обзор вашего ресторана сегодня</p>
-      </div>
+    <!-- <div class="flex items-center justify-between">
       <UButton 
         @click="refreshData" 
         icon="i-lucide-refresh-cw" 
@@ -84,7 +80,7 @@ const refreshData = async () => {
       >
         Обновить
       </UButton>
-    </div>
+    </div> -->
 
     <!-- Основные метрики -->
     <div v-if="!loading && stats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -92,11 +88,11 @@ const refreshData = async () => {
       <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-blue-100 text-sm font-medium">Заказы сегодня</p>
+            <p class="text-blue-100 text-sm font-medium">Замовлення сьогодні</p>
             <p class="text-3xl font-bold mt-2">{{ stats.todayOrders }}</p>
             <div class="flex items-center mt-2">
               <UIcon name="i-lucide-trending-up" class="w-4 h-4 mr-1" />
-              <span class="text-sm">+12% от вчера</span>
+              <span class="text-sm">+12% от вчора</span>
             </div>
           </div>
           <div class="w-12 h-12 bg-blue-400 bg-opacity-30 rounded-lg flex items-center justify-center">
@@ -109,11 +105,11 @@ const refreshData = async () => {
       <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-green-100 text-sm font-medium">Выручка сегодня</p>
+            <p class="text-green-100 text-sm font-medium">Виручка сьогодні</p>
             <p class="text-3xl font-bold mt-2">{{ formatPrice(stats.todayRevenue) }}</p>
             <div class="flex items-center mt-2">
               <UIcon name="i-lucide-trending-up" class="w-4 h-4 mr-1" />
-              <span class="text-sm">+8% от прошлой недели</span>
+              <span class="text-sm">+8% від минулого тижня</span>
             </div>
           </div>
           <div class="w-12 h-12 bg-green-400 bg-opacity-30 rounded-lg flex items-center justify-center">
@@ -126,11 +122,11 @@ const refreshData = async () => {
       <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-orange-100 text-sm font-medium">Активные заказы</p>
+            <p class="text-orange-100 text-sm font-medium">Активні замовлення</p>
             <p class="text-3xl font-bold mt-2">{{ stats.pendingOrders }}</p>
             <div class="flex items-center mt-2">
               <UIcon name="i-lucide-clock" class="w-4 h-4 mr-1" />
-              <span class="text-sm">Требуют внимания</span>
+              <span class="text-sm">Потребують уваги</span>
             </div>
           </div>
           <div class="w-12 h-12 bg-orange-400 bg-opacity-30 rounded-lg flex items-center justify-center">
@@ -143,11 +139,11 @@ const refreshData = async () => {
       <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-6 text-white">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-purple-100 text-sm font-medium">Выполнено</p>
+            <p class="text-purple-100 text-sm font-medium">Виконано</p>
             <p class="text-3xl font-bold mt-2">{{ stats.completedOrders }}</p>
             <div class="flex items-center mt-2">
               <UIcon name="i-lucide-check-circle" class="w-4 h-4 mr-1" />
-              <span class="text-sm">За всё время</span>
+              <span class="text-sm">За весь час</span>
             </div>
           </div>
           <div class="w-12 h-12 bg-purple-400 bg-opacity-30 rounded-lg flex items-center justify-center">
@@ -176,9 +172,9 @@ const refreshData = async () => {
       <!-- Последние заказы -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-semibold text-gray-900">Последние заказы</h3>
+          <h3 class="text-lg font-semibold text-gray-900">Останні замовлення</h3>
           <UButton to="/admin/orders" variant="ghost" size="sm" icon="i-lucide-arrow-right">
-            Все заказы
+            Всі замовлення
           </UButton>
         </div>
 
@@ -210,10 +206,10 @@ const refreshData = async () => {
             </div>
             <div class="text-right">
               <UBadge :color="getStatusColor(order.status)" variant="soft" size="sm">
-                {{ order.status === 'pending' ? 'Ожидает' : 
-                   order.status === 'preparing' ? 'Готовится' : 
-                   order.status === 'ready' ? 'Готов' : 
-                   order.status === 'delivered' ? 'Доставлен' : 'Отменен' }}
+                {{ order.status === 'pending' ? 'Очікує' : 
+                   order.status === 'preparing' ? 'Готується' : 
+                   order.status === 'ready' ? 'ГоГотовийтов' : 
+                   order.status === 'delivered' ? 'Доставлено' : 'ОтмСкасованоенен' }}
               </UBadge>
               <p class="text-sm font-medium text-gray-900 mt-1">{{ formatPrice(order.total) }}</p>
             </div>
@@ -222,14 +218,14 @@ const refreshData = async () => {
 
         <div v-else class="text-center py-8">
           <UIcon name="i-lucide-package" class="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p class="text-gray-500">Заказов пока нет</p>
+          <p class="text-gray-500">Замовлень поки немає</p>
         </div>
       </div>
 
       <!-- Популярные блюда -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-semibold text-gray-900">Популярные блюда</h3>
+          <h3 class="text-lg font-semibold text-gray-900">Популярні страви</h3>
           <UButton to="/admin/menu" variant="ghost" size="sm" icon="i-lucide-arrow-right">
             Меню
           </UButton>
@@ -259,7 +255,7 @@ const refreshData = async () => {
             </div>
             <div class="flex-1 min-w-0">
               <p class="font-medium text-gray-900 truncate">{{ item.name }}</p>
-              <p class="text-sm text-gray-500">{{ item.orders }} заказов</p>
+              <p class="text-sm text-gray-500">{{ item.orders }} замовленнь</p>
             </div>
             <div class="text-right">
               <p class="font-medium text-gray-900">{{ formatPrice(item.revenue) }}</p>
@@ -269,14 +265,14 @@ const refreshData = async () => {
 
         <div v-else class="text-center py-8">
           <UIcon name="i-lucide-utensils" class="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p class="text-gray-500">Статистика пока недоступна</p>
+          <p class="text-gray-500">Статистика поки що недоступна</p>
         </div>
       </div>
     </div>
 
     <!-- Быстрые действия -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">Быстрые действия</h3>
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">Швидкі дії</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <UButton 
           to="/admin/orders?status=pending" 
@@ -284,7 +280,7 @@ const refreshData = async () => {
           icon="i-lucide-clock"
           block
         >
-          Новые заказы ({{ stats?.pendingOrders || 0 }})
+          Нові замовлення ({{ stats?.pendingOrders || 0 }})
         </UButton>
         <UButton 
           to="/admin/menu/create" 
@@ -292,7 +288,7 @@ const refreshData = async () => {
           icon="i-lucide-plus-circle"
           block
         >
-          Добавить блюдо
+          Додати страву
         </UButton>
         <UButton 
           to="/admin/analytics" 
@@ -301,7 +297,7 @@ const refreshData = async () => {
           icon="i-lucide-bar-chart-3"
           block
         >
-          Аналитика
+          Аналітика
         </UButton>
         <UButton 
           to="/admin/customers" 
@@ -310,7 +306,7 @@ const refreshData = async () => {
           icon="i-lucide-users"
           block
         >
-          Клиенты
+          Кліенти
         </UButton>
       </div>
     </div>
@@ -320,8 +316,8 @@ const refreshData = async () => {
       <div class="flex items-center">
         <UIcon name="i-lucide-alert-triangle" class="w-5 h-5 text-red-500 mr-3" />
         <div>
-          <h3 class="text-sm font-medium text-red-800">Ошибка загрузки данных</h3>
-          <p class="text-sm text-red-600 mt-1">{{ error.message || 'Не удалось загрузить данные дашборда' }}</p>
+          <h3 class="text-sm font-medium text-red-800">Помилка завантаження даних</h3>
+          <p class="text-sm text-red-600 mt-1">{{ error.message || 'Не вдалося завантажити дані дашборда' }}</p>
         </div>
       </div>
     </div>

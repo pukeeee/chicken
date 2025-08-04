@@ -11,7 +11,7 @@ const isModalOpen = ref(false)
 const selectedStatus = ref('')
 const searchQuery = ref('')
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(5)
 
 // Получаем параметры из URL
 const route = useRoute()
@@ -41,9 +41,9 @@ const { data: ordersData, pending: loading, error, refresh } = await useFetch('/
 })
 
 // Если есть ошибка авторизации, перенаправляем на логин
-if (error.value?.statusCode === 401) {
-  await navigateTo('/admin/login')
-}
+// if (error.value?.statusCode === 401) {
+//   await navigateTo('/admin/login')
+// }
 
 // Вычисляемые данные
 const orders = computed(() => ordersData.value?.orders || [])
@@ -52,27 +52,27 @@ const totalPages = computed(() => Math.ceil(totalOrders.value / pageSize.value))
 
 // Опции статусов
 const statusOptions = [
-  { label: 'Все статусы', value: '' },
-  { label: 'Ожидает', value: 'pending' },
-  { label: 'Готовится', value: 'preparing' },
-  { label: 'Готов', value: 'ready' },
-  { label: 'Доставлен', value: 'delivered' },
-  { label: 'Отменен', value: 'cancelled' }
+  { label: 'Всі статуси', value: '' },
+  { label: 'Очікує', value: 'pending' },
+  { label: 'Готується', value: 'preparing' },
+  { label: 'Готовий', value: 'ready' },
+  { label: 'Доставлено', value: 'delivered' },
+  { label: 'Скасовано', value: 'cancelled' }
 ]
 
 // Конфигурация статусов
 const statusConfig = {
-  pending: { label: 'Ожидает', color: 'orange', icon: 'i-lucide-clock' },
-  preparing: { label: 'Готовится', color: 'blue', icon: 'i-lucide-chef-hat' },
-  ready: { label: 'Готов', color: 'green', icon: 'i-lucide-check-circle' },
-  delivered: { label: 'Доставлен', color: 'gray', icon: 'i-lucide-truck' },
-  cancelled: { label: 'Отменен', color: 'red', icon: 'i-lucide-x-circle' }
+  PENDING: { label: 'Очікує', color: 'warning', icon: 'i-lucide-clock' },
+  PREPARING: { label: 'Готується', color: 'info', icon: 'i-lucide-chef-hat' },
+  READY: { label: 'Готовий', color: 'success', icon: 'i-lucide-check-circle' },
+  DELIVERED: { label: 'Доставлено', color: 'neutral', icon: 'i-lucide-truck' },
+  CANCELLED: { label: 'Скасовано', color: 'error', icon: 'i-lucide-x-circle' }
 }
 
 const paymentConfig = {
-  cash: { label: 'Наличные', icon: 'i-lucide-banknote' },
-  card: { label: 'Карта', icon: 'i-lucide-credit-card' },
-  online: { label: 'Онлайн', icon: 'i-lucide-smartphone' }
+  CASH: { label: 'Готівка', icon: 'i-lucide-banknote' },
+  CARD: { label: 'Картка', icon: 'i-lucide-credit-card' },
+  ONLINE: { label: 'Онлайн', icon: 'i-lucide-smartphone' }
 }
 
 // Методы
@@ -131,16 +131,16 @@ const handleUpdateStatus = async (orderId, newStatus) => {
     
     const toast = useToast()
     toast.add({
-      title: 'Статус обновлен',
-      description: `Заказ #${orderId} обновлен`,
+      title: 'Статус оновлено',
+      description: `Замовлення #${orderId} оновлено`,
       color: 'green'
     })
   } catch (err) {
     console.error('Error updating order status:', err)
     const toast = useToast()
     toast.add({
-      title: 'Ошибка',
-      description: 'Не удалось обновить статус заказа',
+      title: 'Помилка',
+      description: 'Не вдалося оновити статус замовлення',
       color: 'red'
     })
   }
@@ -163,21 +163,68 @@ const clearFilters = () => {
 }
 
 // Статистика заказов
-const orderStats = computed(() => {
-  if (!orders.value.length) return null
-  
-  const stats = orders.value.reduce((acc, order) => {
-    acc[order.status] = (acc[order.status] || 0) + 1
-    return acc
-  }, {})
-  
-  return stats
-})
+const orderStats = computed(() => ordersData.value?.orderStats || null)
 
 // Watchers для автоматического обновления
 watch([selectedStatus, searchQuery], () => {
   handleSearch()
 })
+
+// Элементы для UDropdownMenu
+const statusDropdownItems = computed(() => [
+  [
+    {
+      label: 'Всі статуси',
+      icon: 'i-lucide-filter',
+      onSelect: () => {
+        selectedStatus.value = ''
+        handleStatusChange()
+      }
+    }
+  ],
+  [
+    {
+      label: 'Очікує',
+      icon: 'i-lucide-clock',
+      onSelect: () => {
+        selectedStatus.value = 'pending'
+        handleStatusChange()
+      }
+    },
+    {
+      label: 'Готується',
+      icon: 'i-lucide-chef-hat',
+      onSelect: () => {
+        selectedStatus.value = 'preparing'
+        handleStatusChange()
+      }
+    },
+    {
+      label: 'Готовий',
+      icon: 'i-lucide-check-circle',
+      onSelect: () => {
+        selectedStatus.value = 'ready'
+        handleStatusChange()
+      }
+    },
+    {
+      label: 'Доставлено',
+      icon: 'i-lucide-truck',
+      onSelect: () => {
+        selectedStatus.value = 'delivered'
+        handleStatusChange()
+      }
+    },
+    {
+      label: 'Скасовано',
+      icon: 'i-lucide-x-circle',
+      onSelect: () => {
+        selectedStatus.value = 'cancelled'
+        handleStatusChange()
+      }
+    }
+  ]
+])
 </script>
 
 <template>
@@ -185,8 +232,8 @@ watch([selectedStatus, searchQuery], () => {
     <!-- Заголовок страницы -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Управление заказами</h1>
-        <p class="text-gray-600 mt-1">Просматривайте и управляйте всеми заказами</p>
+        <h1 class="text-2xl font-bold text-gray-900">Керування замовленнями</h1>
+        <p class="text-gray-600 mt-1">Переглядайте та керуйте всіма замовленнями</p>
       </div>
       <div class="flex items-center gap-3">
         <UButton 
@@ -195,14 +242,14 @@ watch([selectedStatus, searchQuery], () => {
           variant="outline"
           :loading="loading"
         >
-          Обновить
+          Оновити
         </UButton>
         <UButton 
           icon="i-lucide-download" 
           variant="outline"
           class="text-gray-600"
         >
-          Экспорт
+          Експорт
         </UButton>
       </div>
     </div>
@@ -230,21 +277,36 @@ watch([selectedStatus, searchQuery], () => {
         <div class="flex-1">
           <UInput
             v-model="searchQuery"
-            placeholder="Поиск по номеру заказа, имени клиента или телефону..."
+            placeholder="Пошук за номером замовлення, ім'ям клієнта або телефоном..."
             icon="i-lucide-search"
             size="lg"
           />
         </div>
         
-        <!-- Фильтр по статусу -->
+        <!-- Фильтр по статусу с UDropdownMenu -->
         <div class="w-full sm:w-48">
-          <USelect
-            v-model="selectedStatus"
-            :options="statusOptions"
-            placeholder="Статус"
-            size="lg"
-            @change="handleStatusChange"
-          />
+          <UDropdownMenu 
+            :items="statusDropdownItems"
+            :ui="{ content: 'w-48 max-h-60 overflow-y-auto' }"
+            :content="{ align: 'start' }"
+          >
+            <UButton
+              :icon="selectedStatus && statusConfig[selectedStatus.toUpperCase()] 
+                ? statusConfig[selectedStatus.toUpperCase()].icon 
+                : 'i-lucide-filter'"
+              :color="selectedStatus && statusConfig[selectedStatus.toUpperCase()]
+                ? statusConfig[selectedStatus.toUpperCase()].color
+                : 'gray'"
+              variant="outline"
+              size="lg"
+              block
+              trailing-icon="i-lucide-chevron-down"
+            >
+              {{ selectedStatus && statusConfig[selectedStatus.toUpperCase()]
+                ? statusConfig[selectedStatus.toUpperCase()].label 
+                : 'Всі статуси' }}
+            </UButton>
+          </UDropdownMenu>
         </div>
         
         <!-- Кнопка очистки фильтров -->
@@ -255,7 +317,7 @@ watch([selectedStatus, searchQuery], () => {
           variant="outline"
           size="lg"
         >
-          Очистить
+          Очистити
         </UButton>
       </div>
     </div>
@@ -266,9 +328,9 @@ watch([selectedStatus, searchQuery], () => {
       <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-semibold text-gray-900">
-            Заказы
+            Замовлення
             <span v-if="totalOrders" class="text-sm font-normal text-gray-500 ml-2">
-              ({{ totalOrders }} {{ totalOrders === 1 ? 'заказ' : 'заказов' }})
+              ({{ totalOrders }} {{ totalOrders === 1 ? 'замовлення' : 'замовленнь' }})
             </span>
           </h3>
         </div>
@@ -293,12 +355,12 @@ watch([selectedStatus, searchQuery], () => {
       <div v-else-if="!orders.length" class="p-12 text-center">
         <UIcon name="i-lucide-package-x" class="w-16 h-16 text-gray-300 mx-auto mb-4" />
         <h3 class="text-lg font-medium text-gray-900 mb-2">
-          {{ searchQuery || selectedStatus ? 'Заказы не найдены' : 'Заказов пока нет' }}
+          {{ searchQuery || selectedStatus ? 'Замовлення не знайдені' : 'Замовлень поки немає' }}
         </h3>
         <p class="text-gray-500 mb-6">
           {{ searchQuery || selectedStatus 
-            ? 'Попробуйте изменить параметры поиска или фильтра' 
-            : 'Как только появятся новые заказы, они отобразятся здесь' 
+            ? 'Спробуйте змінити параметри пошуку або фільтру' 
+            : 'Як тільки з\'являться нові замовлення, вони відобразяться тут' 
           }}
         </p>
         <UButton 
@@ -306,7 +368,7 @@ watch([selectedStatus, searchQuery], () => {
           @click="clearFilters"
           variant="outline"
         >
-          Очистить фильтры
+          Очистити фільтри
         </UButton>
       </div>
 
@@ -367,7 +429,7 @@ watch([selectedStatus, searchQuery], () => {
               <td class="px-6 py-4">
                 <div class="text-sm text-gray-900">
                   <div v-for="(item, index) in order.items.slice(0, 2)" :key="index" class="flex justify-between">
-                    <span class="truncate mr-2">{{ item.name }}</span>
+                    <span class="truncate mr-2">{{ item.product.name }}</span>
                     <span class="text-gray-500">x{{ item.quantity }}</span>
                   </div>
                   <div v-if="order.items.length > 2" class="text-xs text-gray-500 mt-1">
@@ -387,11 +449,11 @@ watch([selectedStatus, searchQuery], () => {
               <td class="px-6 py-4 whitespace-nowrap">
                 <UDropdownMenu
                   :items="[[
-                    { label: 'Ожидает', click: () => handleUpdateStatus(order.id, 'pending'), disabled: order.status === 'pending' },
-                    { label: 'Готовится', click: () => handleUpdateStatus(order.id, 'preparing'), disabled: order.status === 'preparing' },
-                    { label: 'Готов', click: () => handleUpdateStatus(order.id, 'ready'), disabled: order.status === 'ready' },
-                    { label: 'Доставлен', click: () => handleUpdateStatus(order.id, 'delivered'), disabled: order.status === 'delivered' },
-                    { label: 'Отменен', click: () => handleUpdateStatus(order.id, 'cancelled'), disabled: order.status === 'cancelled' }
+                    { label: 'Очікує', click: () => handleUpdateStatus(order.id, 'PENDING'), disabled: order.status === 'PENDING' },
+                    { label: 'Готується', click: () => handleUpdateStatus(order.id, 'PREPARING'), disabled: order.status === 'PREPARING' },
+                    { label: 'Готовий', click: () => handleUpdateStatus(order.id, 'READY'), disabled: order.status === 'READY' },
+                    { label: 'Доставлено', click: () => handleUpdateStatus(order.id, 'DELIVERED'), disabled: order.status === 'DELIVERED' },
+                    { label: 'Скасовано', click: () => handleUpdateStatus(order.id, 'CANCELLED'), disabled: order.status === 'CANCELLED' }
                   ]]"
                 >
                   <UBadge
@@ -434,11 +496,11 @@ watch([selectedStatus, searchQuery], () => {
                   />
                   <UDropdownMenu
                     :items="[[
-                      { label: 'Просмотр', icon: 'i-lucide-eye', click: () => handleViewOrder(order) },
-                      { label: 'Печать', icon: 'i-lucide-printer', click: () => console.log('print', order.id) },
-                      { label: 'Дублировать', icon: 'i-lucide-copy', click: () => console.log('duplicate', order.id) }
+                      { label: 'Перегляд', icon: 'i-lucide-eye', click: () => handleViewOrder(order) },
+                      { label: 'Друк', icon: 'i-lucide-printer', click: () => console.log('print', order.id) },
+                      { label: 'Дублювати', icon: 'i-lucide-copy', click: () => console.log('duplicate', order.id) }
                     ], [
-                      { label: 'Отменить заказ', icon: 'i-lucide-x-circle', click: () => handleUpdateStatus(order.id, 'cancelled'), disabled: order.status === 'cancelled' }
+                      { label: 'Скасувати замовлення', icon: 'i-lucide-x-circle', click: () => handleUpdateStatus(order.id, 'CANCELLED'), disabled: order.status === 'CANCELLED' }
                     ]]"
                   >
                     <UButton
@@ -463,9 +525,9 @@ watch([selectedStatus, searchQuery], () => {
             <span class="font-medium">{{ (currentPage - 1) * pageSize + 1 }}</span>
             -
             <span class="font-medium">{{ Math.min(currentPage * pageSize, totalOrders) }}</span>
-            из
+            з
             <span class="font-medium">{{ totalOrders }}</span>
-            заказов
+            замовлень
           </div>
           
           <div class="flex items-center gap-2">
@@ -514,8 +576,8 @@ watch([selectedStatus, searchQuery], () => {
       <div class="flex items-center">
         <UIcon name="i-lucide-alert-triangle" class="w-5 h-5 text-red-500 mr-3" />
         <div>
-          <h3 class="text-sm font-medium text-red-800">Ошибка загрузки заказов</h3>
-          <p class="text-sm text-red-600 mt-1">{{ error.message || 'Произошла ошибка при загрузке заказов' }}</p>
+          <h3 class="text-sm font-medium text-red-800">Помилка завантаження замовлень</h3>
+          <p class="text-sm text-red-600 mt-1">{{ error.message || 'Сталася помилка при завантаженні замовлень' }}</p>
         </div>
       </div>
     </div>

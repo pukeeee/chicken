@@ -19,13 +19,13 @@ const route = useRoute()
 const pageTitle = computed(() => {
   const titles: Record<string, string> = {
     '/admin': 'Дашборд',
-    '/admin/orders': 'Заказы',
+    '/admin/orders': 'Замовлення',
     '/admin/menu': 'Меню',
-    '/admin/customers': 'Клиенты',
-    '/admin/analytics': 'Аналитика',
-    '/admin/settings': 'Настройки'
+    '/admin/customers': 'Клієнти',
+    '/admin/analytics': 'Аналітика',
+    '/admin/settings': 'Налаштування',
   }
-  return titles[route.path] || 'Админ панель'
+  return titles[route.path] || 'Адмін панель'
 })
 </script>
 

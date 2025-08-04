@@ -20,26 +20,26 @@ async function logout() {
 const currentTime = new Date()
 const hour = currentTime.getHours()
 const greeting = computed(() => {
-  if (hour < 12) return 'Доброе утро'
-  if (hour < 17) return 'Добрый день'
-  if (hour < 21) return 'Добрый день'
-  return 'Доброй ночи'
+  if (hour < 12) return 'Доброго ранку'
+  if (hour < 17) return 'Доброго дня'
+  if (hour < 21) return 'Доброго вечора'
+  return 'Доброї ночі'
 })
 
 // Создаем массив элементов для dropdown
 const dropdownItems = computed(() => [
   [{
-    label: 'Профиль',
+    label: 'Профіль',
     icon: 'i-lucide-user',
     to: '/admin/profile'
   }],
   [{
-    label: 'Настройки',
+    label: 'Налаштування',
     icon: 'i-lucide-settings',
     to: '/admin/settings'
   }],
   [{
-    label: 'Выйти',
+    label: 'Вихід',
     icon: 'i-lucide-log-out',
     async onSelect() {
       await logout()
@@ -60,7 +60,7 @@ const dropdownItems = computed(() => [
       <div class="flex items-center gap-4">
         <div>
           <h1 class="text-xl font-semibold text-gray-900">{{ title }}</h1>
-          <p class="text-sm text-gray-500">{{ greeting }}, добро пожаловать в панель управления</p>
+          <p class="text-sm text-gray-500">{{ greeting }}, ласкаво просимо до панелі управління</p>
         </div>
       </div>
 

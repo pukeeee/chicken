@@ -21,7 +21,7 @@ const menuItems: MenuItem[] = [
     to: '/admin'
   },
   {
-    label: 'Заказы',
+    label: 'Замовлення',
     icon: 'i-lucide-shopping-bag',
     to: '/admin/orders',
     badge: 5
@@ -32,17 +32,17 @@ const menuItems: MenuItem[] = [
     to: '/admin/menu'
   },
   {
-    label: 'Клиенты',
+    label: 'Клієнти',
     icon: 'i-lucide-users',
     to: '/admin/customers'
   },
   {
-    label: 'Аналитика',
+    label: 'Аналітика',
     icon: 'i-lucide-bar-chart-3',
     to: '/admin/analytics'
   },
   {
-    label: 'Настройки',
+    label: 'Налаштування',
     icon: 'i-lucide-settings',
     to: '/admin/settings'
   }
@@ -63,10 +63,10 @@ const toggleSidebar = () => {
     <!-- Header -->
     <div class="flex items-center justify-between p-4 border-b border-gray-200">
       <div v-if="!collapsed" class="flex items-center gap-2 flex-1">
-        <img src="/logo.png" alt="Лого" class="w-8 h-8 object-contain" />
+        <img src="/images/logo.png" alt="Лого" class="w-8 h-8 object-contain" />
         <span class="font-bold text-lg text-amber-600">Chicken</span>
       </div>
-      <img v-else src="/logo.png" alt="Лого" class="w-8 h-8 object-contain" />
+      <img v-else src="/images/logo.png" alt="Лого" class="w-8 h-8 object-contain" />
       
       <UButton
         @click="toggleSidebar"
@@ -118,7 +118,7 @@ const toggleSidebar = () => {
           <UIcon name="i-lucide-user" class="w-4 h-4 text-white" />
         </div>
         <div v-if="!collapsed" class="flex-1 min-w-0">
-          <p class="text-sm font-medium text-gray-900 truncate">Админ</p>
+          <p class="text-sm font-medium text-gray-900 truncate">Адмін</p>
           <p class="text-xs text-gray-500 truncate">admin@kurochka.com</p>
         </div>
       </div>

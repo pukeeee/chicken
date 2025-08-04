@@ -12,8 +12,8 @@ model User {
   email     String?   @unique
   name      String?
   phone     String    @unique
-  password  String    @default(null)
-  isActive  Bool      @default(true)
+  password  String?
+  isActive  Boolean   @default(true)
   token     String?   @unique
   role      Role      @default(USER)
   createdAt DateTime  @default(now())
@@ -31,7 +31,7 @@ model Product {
   description String?
   price       Float
   image       String?
-  isActive    Bool        @default(true)
+  isActive    Boolean     @default(true)
   createdAt   DateTime    @default(now())
   category    Category?   @relation(fields: [categoryId], references: [id])
   categoryId  Int?

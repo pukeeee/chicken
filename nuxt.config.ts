@@ -5,11 +5,6 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   css: ['~/assets/css/main.css'],
   sourcemap: false,
-  vite: {
-    plugins: [
-      tailwindcss(),
-    ],
-  },
   modules: [
     '@pinia/nuxt',
     '@nuxt/ui'
