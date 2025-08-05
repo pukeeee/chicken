@@ -85,7 +85,7 @@ export const useOrders = (): UseOrdersReturn => {
   const createStatusDropdownItems = (onStatusSelect: (status: string) => void): StatusDropdownItem[][] => [
     [
       {
-        label: 'Все статусы',
+        label: 'Всі статуси',
         icon: 'i-lucide-filter',
         onSelect: () => onStatusSelect('')
       }
