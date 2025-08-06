@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Order } from '~/types/order'
+import type { Order, OrderUpdateData } from '~/types/order'
 import TableRow from './tableRow.vue'
 
 interface Props {
@@ -15,7 +15,7 @@ interface Props {
 defineProps<Props>()
 
 defineEmits<{
-  updateStatus: [orderId: string | number, status: string]
+  updateOrder: [orderId: string | number, updateData: OrderUpdateData]
   viewOrder: [order: Order]
   callCustomer: [phone: string]
   printOrder: [orderId: string | number]
@@ -73,7 +73,7 @@ defineEmits<{
             :order="order"
             :status-config="statusConfig"
             :payment-config="paymentConfig"
-            @update-status="(orderId, status) => $emit('updateStatus', orderId, status)"
+            @update-order="(orderId: string | number, updateData: OrderUpdateData) => $emit('updateOrder', orderId, updateData)"
             @view-order="$emit('viewOrder', $event)"
             @call-customer="$emit('callCustomer', $event)"
             @print-order="$emit('printOrder', $event)"

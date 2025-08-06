@@ -22,7 +22,7 @@ const {
   handleStatusChange,
   handlePageChange,
   clearFilters,
-  updateOrderStatus,
+  updateOrder,
   callCustomer,
   refresh,
   createStatusDropdownItems
@@ -51,8 +51,8 @@ const handleViewOrder = (order) => {
   isModalOpen.value = true
 }
 
-const handleUpdateStatus = async (orderId, newStatus) => {
-  await updateOrderStatus(orderId, newStatus)
+const handleUpdateOrder = async (orderId, updateData) => {
+  await updateOrder(orderId, updateData)
 }
 
 const handleCallCustomer = (phone) => {
@@ -149,7 +149,7 @@ const paymentConfig = PAYMENT_METHOD_CONFIG
       :selected-status="selectedStatus"
       :status-config="statusConfig"
       :payment-config="paymentConfig"
-      @update-status="handleUpdateStatus"
+      @update-order="handleUpdateOrder"
       @view-order="handleViewOrder"
       @call-customer="handleCallCustomer"
       @print-order="handlePrintOrder"

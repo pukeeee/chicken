@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Order } from '~/types/order'
+import type { Order, OrderUpdateData } from '~/types/order'
 import { formatDate, formatPrice } from '~/utils/formatters'
 import { 
   OrderStatus, 
   ORDER_STATUS_CONFIG, 
   PaymentMethod, 
-  PAYMENT_METHOD_CONFIG 
+  PAYMENT_METHOD_CONFIG
 } from '~/constants/orderConstants'
 
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  updateStatus: [orderId: string | number, status: OrderStatus]
+  updateOrder: [orderId: string | number, updateData: OrderUpdateData]
   viewOrder: [order: Order]
   callCustomer: [phone: string]
   printOrder: [orderId: string | number]
@@ -27,7 +27,7 @@ const emit = defineEmits<{
 const statusMenuItems = computed(() => [
   Object.entries(ORDER_STATUS_CONFIG).map(([statusKey, config]) => ({
     label: config.label,
-    click: () => emit('updateStatus', props.order.id, statusKey as OrderStatus),
+    onSelect: () => emit('updateOrder', props.order.id, { status: statusKey as OrderStatus }),
     disabled: props.order.status === statusKey
   }))
 ])
@@ -55,7 +55,7 @@ const actionMenuItems = computed(() => [
     { 
       label: 'Скасувати замовлення', 
       icon: 'i-lucide-x-circle', 
-      click: () => emit('updateStatus', props.order.id, OrderStatus.CANCELLED), 
+      onSelect: () => emit('updateOrder', props.order.id, { status: OrderStatus.CANCELLED }),
       disabled: props.order.status === OrderStatus.CANCELLED 
     }
   ]

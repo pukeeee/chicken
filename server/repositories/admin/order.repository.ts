@@ -1,11 +1,5 @@
 import prisma from '~/server/database/client'
-
-export interface OrderFilters {
-    status?: string
-    search?: string
-    page?: number
-    limit?: number
-}
+import type { OrderUpdateData, OrderFilters } from '~/types/order'
 
 export async function getAllOrders(filters?: OrderFilters) {
     const {status, search, page = 1, limit = 5} = filters || {}
@@ -83,17 +77,44 @@ export async function getAllOrders(filters?: OrderFilters) {
     }
 }
 
-export async function updateOrderStatus(orderId: number, status: string) {
-    return await prisma.order.update({
-        where: {id: orderId},
-        data: {status: status.toUpperCase()},
+export async function updateOrder(orderId: number, updateData: OrderUpdateData) {
+  // Создаем объект только с полями, которые можно обновлять
+  const prismaUpdateData: any = {};
+
+  // Обрабатываем каждое поле согласно схеме Prisma
+  if (updateData.status !== undefined) {
+    prismaUpdateData.status = updateData.status;
+  }
+  if (updateData.customerName !== undefined) {
+    prismaUpdateData.customerName = updateData.customerName;
+  }
+  if (updateData.customerPhone !== undefined) {
+    prismaUpdateData.customerPhone = updateData.customerPhone;
+  }
+  if (updateData.deliveryAddress !== undefined) {
+    prismaUpdateData.deliveryAddress = updateData.deliveryAddress;
+  }
+  if (updateData.total !== undefined) {
+    prismaUpdateData.total = updateData.total;
+  }
+  if (updateData.paymentMethod !== undefined) {
+    prismaUpdateData.paymentMethod = updateData.paymentMethod;
+  }
+  if (updateData.userId !== undefined) {
+    prismaUpdateData.userId = updateData.userId;
+  }
+
+  return await prisma.order.update({
+    where: { id: orderId },
+    data: prismaUpdateData,
+    include: {
+      items: {
         include: {
-            items: {
-                include: {
-                    product: true
-                }
-            },
-            payment: true
+          product: true
         }
-    })
+      },
+      payment: true,
+      user: true // добавляем пользователя
+    }
+  });
 }

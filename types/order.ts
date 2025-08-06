@@ -1,16 +1,40 @@
 export interface Order {
-  id: string | number
-  status: string
+  id: number
+  userId?: number
   customerName?: string
   customerPhone?: string
-  customerEmail?: string
-  total: number
-  items: OrderItem[]
-  createdAt: string
-  updatedAt?: string
   deliveryAddress?: string
-  paymentMethod?: string
-  notes?: string
+  paymentMethod: 'CASH' | 'CARD' | 'ONLINE'
+  status: 'PENDING' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED'
+  total: number
+  createdAt: string
+  items: OrderItem[]
+  payment?: Payment
+  user?: {
+    id: number
+    name?: string
+    email?: string
+    phone: string
+  }
+}
+
+export interface OrderUpdateData {
+  status?: 'PENDING' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED';
+  customerName?: string;
+  customerPhone?: string;
+  deliveryAddress?: string;
+  total?: number;
+  paymentMethod?: 'CASH' | 'CARD' | 'ONLINE';
+  userId?: number; // если нужно привязать к пользователю
+}
+
+export interface Payment {
+  id: number
+  orderId: number
+  amount: number
+  method: 'CASH' | 'CARD' | 'ONLINE'
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED'
+  createdAt: string
 }
 
 export interface OrderItem {
@@ -99,7 +123,7 @@ export interface UseOrdersReturn {
   handleStatusChange: () => void
   handlePageChange: (page: number) => void
   clearFilters: () => void
-  updateOrderStatus: (orderId: string | number, newStatus: string) => Promise<void>
+  updateOrder: (orderId: string | number, updateData: OrderUpdateData) => Promise<void>
   callCustomer: (phone: string) => void
   refresh: () => Promise<void>
   createStatusDropdownItems: (onStatusSelect: (status: string) => void) => StatusDropdownItem[][]
