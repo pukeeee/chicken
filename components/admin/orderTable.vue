@@ -15,7 +15,7 @@ interface Order {
   paymentMethod: 'cash' | 'card' | 'online'
 }
 
-const props = defineProps<{
+defineProps<{
   orders: Order[]
   loading?: boolean
 }>()

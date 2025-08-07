@@ -16,6 +16,7 @@ defineProps<Props>()
 
 defineEmits<{
   updateOrder: [orderId: string | number, updateData: OrderUpdateData]
+  updateOrderModal: [order: Order]
   viewOrder: [order: Order]
   callCustomer: [phone: string]
   printOrder: [orderId: string | number]
@@ -74,6 +75,7 @@ defineEmits<{
             :status-config="statusConfig"
             :payment-config="paymentConfig"
             @update-order="(orderId: string | number, updateData: OrderUpdateData) => $emit('updateOrder', orderId, updateData)"
+            @update-order-modal="$emit('updateOrderModal', $event)"
             @view-order="$emit('viewOrder', $event)"
             @call-customer="$emit('callCustomer', $event)"
             @print-order="$emit('printOrder', $event)"

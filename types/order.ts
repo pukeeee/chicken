@@ -1,85 +1,38 @@
-export interface Order {
+export interface User {
   id: number
-  userId?: number
-  customerName?: string
-  customerPhone?: string
-  deliveryAddress?: string
-  paymentMethod: 'CASH' | 'CARD' | 'ONLINE'
-  status: 'PENDING' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED'
-  total: number
-  createdAt: string
-  items: OrderItem[]
-  payment?: Payment
-  user?: {
-    id: number
-    name?: string
-    email?: string
-    phone: string
-  }
+  name?: string
+  email?: string
+  phone?: string
 }
 
-export interface OrderUpdateData {
-  status?: 'PENDING' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED';
-  customerName?: string;
-  customerPhone?: string;
-  deliveryAddress?: string;
-  total?: number;
-  paymentMethod?: 'CASH' | 'CARD' | 'ONLINE';
-  userId?: number; // если нужно привязать к пользователю
-}
-
-export interface Payment {
+export interface Product {
   id: number
-  orderId: number
-  amount: number
-  method: 'CASH' | 'CARD' | 'ONLINE'
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED'
-  createdAt: string
-}
-
-export interface OrderItem {
-  id: string | number
-  productId: number
-  product: {
-    name: string
-  }
+  name: string
   price: number
-  quantity: number
   image?: string
 }
 
-// Статистика заказов
-export interface OrderStats {
+export interface OrderItem {
+  id: number
+  quantity: number
+  price: number
+  image?: string
+  product: Product
+}
+
+export interface Order {
+  id: number
+  status: string
+  customerName?: string
+  customerPhone?: string
+  customerEmail?: string
+  deliveryAddress?: string
   total: number
-  pending: number
-  confirmed: number
-  preparing: number
-  ready: number
-  delivered: number
-  cancelled: number
-  // Добавьте другие поля статистики по необходимости
-}
-
-// Ответ API для списка заказов
-export interface OrdersResponse {
-  orders: Order[]
-  total: number
-  orderStats?: OrderStats
-}
-
-// Конфигурация статуса заказа
-export interface OrderStatusConfig {
-  value: string
-  label: string
-  icon: string
-  color?: string
-}
-
-// Элемент дропдауна для выбора статуса
-export interface StatusDropdownItem {
-  label: string
-  icon: string
-  onSelect: () => void
+  paymentMethod: string
+  createdAt: string
+  updatedAt?: string
+  items: OrderItem[]
+  user?: User
 }
 
 // Параметры запроса для фильтрации заказов
@@ -90,19 +43,55 @@ export interface OrderFilters {
   limit: number
 }
 
-// Параметры обновления статуса заказа
-export interface UpdateOrderStatusPayload {
-  status: string
+export interface OrderUpdateData {
+  userId?: number
+  status?: string
+  customerName?: string
+  customerPhone?: string
+  customerEmail?: string
+  deliveryAddress?: string
+  total?: number
+  paymentMethod?: string
 }
 
-// Уведомление (Toast)
-export interface ToastNotification {
-  title: string
-  description: string
-  color: "error" | "warning" | "info" | "success" | "neutral" | "primary" | "secondary"
+export interface OrderStats {
+  total: number
+  pending: number
+  preparing: number
+  ready: number
+  delivered: number
+  cancelled: number
+  todayTotal: number
+  weekTotal: number
+  monthTotal: number
 }
 
-// Тип для возвращаемого значения composable useOrders
+export interface OrdersResponse {
+  orders: Order[]
+  total: number
+  page: number
+  limit: number
+  orderStats: OrderStats
+}
+
+export interface StatusDropdownItem {
+  label: string
+  icon: string
+  onSelect: () => void
+}
+
+export interface OrderStatusConfig {
+  label: string
+  color: 'warning' | 'info' | 'success' | 'neutral' | 'error'
+  icon: string
+  value: string
+}
+
+export interface PaymentMethodConfig {
+  label: string
+  icon: string
+}
+
 export interface UseOrdersReturn {
   // Состояния
   selectedStatus: Ref<string>
@@ -125,6 +114,8 @@ export interface UseOrdersReturn {
   clearFilters: () => void
   updateOrder: (orderId: string | number, updateData: OrderUpdateData) => Promise<void>
   callCustomer: (phone: string) => void
+  printOrder: (orderId: string | number) => void
+  duplicateOrder: (orderId: string | number) => Promise<void>
   refresh: () => Promise<void>
   createStatusDropdownItems: (onStatusSelect: (status: string) => void) => StatusDropdownItem[][]
 }

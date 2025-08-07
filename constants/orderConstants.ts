@@ -1,5 +1,3 @@
-// constants/orderConstants.ts
-
 // Enum для статусов заказов (для использования в БД)
 export enum OrderStatus {
   PENDING = 'PENDING',
@@ -69,3 +67,17 @@ export const PAYMENT_METHOD_CONFIG = {
 // Типы для TypeScript
 export type OrderStatusKey = keyof typeof ORDER_STATUS_CONFIG
 export type PaymentMethodKey = keyof typeof PAYMENT_METHOD_CONFIG
+
+// Дефолтные значения
+export const DEFAULT_ORDER_STATUS = OrderStatus.PENDING
+export const DEFAULT_PAYMENT_METHOD = PaymentMethod.CASH
+export const DEFAULT_PAGE_SIZE = 5
+export const MAX_PAGE_SIZE = 100
+
+// Константы для валидации
+export const VALIDATION_RULES = {
+  MIN_TOTAL_AMOUNT: 0.01,
+  MAX_TOTAL_AMOUNT: 999999.99,
+  PHONE_REGEX: /^(\+380|380|0)[0-9]{9}$/,
+  EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+} as const

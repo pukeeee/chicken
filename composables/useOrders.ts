@@ -137,6 +137,48 @@ export const useOrders = (): UseOrdersReturn => {
         handleSearch()
     })
 
+    // Add new methods for printing and duplicating orders
+    const printOrder = async (orderId: string | number): Promise<void> => {
+        try {
+            // Implementation for printing order
+            // This could open a print-friendly page or generate a PDF
+            window.open(`/api/admin/orders/${orderId}/print`, '_blank')
+        } catch (err) {
+            console.error('Error printing order:', err)
+            const toast = useToast()
+            toast.add({
+                title: 'Помилка',
+                description: 'Не вдалося роздрукувати замовлення',
+                color: 'error'
+            })
+        }
+    }
+
+    const duplicateOrder = async (orderId: string | number): Promise<void> => {
+        try {
+            await $fetch<any>(`/api/admin/orders/${orderId}/duplicate`, {
+                method: 'POST'
+            })
+            
+            await refresh()
+            
+            const toast = useToast()
+            toast.add({
+                title: 'Замовлення продубльовано',
+                description: `Замовлення #${orderId} успішно продубльовано`,
+                color: 'success'
+            })
+        } catch (err) {
+            console.error('Error duplicating order:', err)
+            const toast = useToast()
+            toast.add({
+                title: 'Помилка',
+                description: 'Не вдалося продублювати замовлення',
+                color: 'error'
+            })
+        }
+    }
+
     return {
         // Состояния
         selectedStatus,
@@ -160,6 +202,8 @@ export const useOrders = (): UseOrdersReturn => {
         updateOrder,
         callCustomer,
         refresh,
-        createStatusDropdownItems
+        createStatusDropdownItems,
+        printOrder,
+        duplicateOrder
     }
 }

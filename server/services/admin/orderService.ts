@@ -1,5 +1,6 @@
 import { getAllOrders, updateOrder } from "~/server/repositories/admin/order.repository";
 import type { OrderUpdateData, OrderFilters } from "~/types/order";
+import { OrderStatus } from "~/constants/orderConstants";
 
 // Сервис для получения всех заказов
 export async function fetchAllOrders(filters?: OrderFilters) {
@@ -8,8 +9,8 @@ export async function fetchAllOrders(filters?: OrderFilters) {
 
 const validators = {
     status: (value: string) => {
-        const validStatuses = ['PENDING', 'PREPARING', 'READY', 'DELIVERED', 'CANCELLED'];
-        if (!validStatuses.includes(value.toUpperCase())) {
+        const validStatuses = Object.values(OrderStatus);
+        if (!validStatuses.includes(value.toUpperCase() as OrderStatus)) {
         throw new Error('Неверный статус заказа');
         }
     },

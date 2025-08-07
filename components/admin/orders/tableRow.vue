@@ -17,6 +17,7 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   updateOrder: [orderId: string | number, updateData: OrderUpdateData]
+  updateOrderModal: [order: Order]
   viewOrder: [order: Order]
   callCustomer: [phone: string]
   printOrder: [orderId: string | number]
@@ -38,17 +39,22 @@ const actionMenuItems = computed(() => [
     { 
       label: 'Перегляд', 
       icon: 'i-lucide-eye', 
-      click: () => emit('viewOrder', props.order) 
+      onSelect: () => emit('viewOrder', props.order) 
+    },
+    { 
+      label: 'Редагувати', 
+      icon: 'i-lucide-pencil-line', 
+      onSelect: () => emit('updateOrderModal', props.order) 
     },
     { 
       label: 'Друк', 
       icon: 'i-lucide-printer', 
-      click: () => emit('printOrder', props.order.id) 
+      onSelect: () => emit('printOrder', props.order.id) 
     },
     { 
       label: 'Дублювати', 
       icon: 'i-lucide-copy', 
-      click: () => emit('duplicateOrder', props.order.id) 
+      onSelect: () => emit('duplicateOrder', props.order.id) 
     }
   ],
   [
@@ -161,6 +167,13 @@ const statusConfig = computed(() => {
           variant="ghost"
           size="sm"
           class="text-gray-400 hover:text-blue-600"
+        />
+        <UButton
+          @click="emit('updateOrderModal', order)"
+          icon="i-lucide-pencil-line"
+          variant="ghost"
+          size="sm"
+          class="text-gray-400 hover:text-purple-600"
         />
         <UButton
           v-if="order.customerPhone"

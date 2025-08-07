@@ -24,6 +24,8 @@ const {
   clearFilters,
   updateOrder,
   callCustomer,
+  printOrder,
+  duplicateOrder,
   refresh,
   createStatusDropdownItems
 } = useOrders()
@@ -31,6 +33,7 @@ const {
 // Состояния модального окна
 const selectedOrder = ref(null)
 const isModalOpen = ref(false)
+const isUpdateModalOpen = ref(false)
 
 // Инициализируем фильтры из URL
 onMounted(() => {
@@ -51,6 +54,11 @@ const handleViewOrder = (order) => {
   isModalOpen.value = true
 }
 
+const handleUpdateOrderModal = (order) => {
+  selectedOrder.value = order
+  isUpdateModalOpen.value = true
+}
+
 const handleUpdateOrder = async (orderId, updateData) => {
   await updateOrder(orderId, updateData)
 }
@@ -60,23 +68,16 @@ const handleCallCustomer = (phone) => {
 }
 
 const handlePrintOrder = (orderId) => {
-  // Реализуйте логику печати заказа
-  console.log('Print order:', orderId)
+  printOrder(orderId)
 }
 
 const handleDuplicateOrder = (orderId) => {
-  // Реализуйте логику дублирования заказа
-  console.log('Duplicate order:', orderId)
+  duplicateOrder(orderId)
 }
 
 // Экспортируем конфигурации для использования в шаблоне
 const statusConfig = ORDER_STATUS_CONFIG
 const paymentConfig = PAYMENT_METHOD_CONFIG
-
-// Проверка авторизации
-// if (error.value?.statusCode === 401) {
-//   await navigateTo('/admin/login')
-// }
 </script>
 
 <template>
@@ -150,11 +151,20 @@ const paymentConfig = PAYMENT_METHOD_CONFIG
       :status-config="statusConfig"
       :payment-config="paymentConfig"
       @update-order="handleUpdateOrder"
+      @update-order-modal="handleUpdateOrderModal"
       @view-order="handleViewOrder"
       @call-customer="handleCallCustomer"
       @print-order="handlePrintOrder"
       @duplicate-order="handleDuplicateOrder"
       @clear-filters="clearFilters"
+    />
+
+    <!-- Модальное окно редактирования -->
+    <AdminOrdersUpdateModal 
+      v-if="selectedOrder"
+      v-model="isUpdateModalOpen"
+      :order="selectedOrder"
+      @save="handleUpdateOrder"
     />
 
     <!-- Пагинация -->
