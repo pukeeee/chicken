@@ -16,6 +16,6 @@ export interface MenuItem {
   id: number
   name: string
   price: number
-  image: string
+  image: string | null
   // если нужно, добавь description, categoryId и т.д.
 }

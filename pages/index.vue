@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, shallowRef } from 'vue'
 import type { TabsItem } from '@nuxt/ui'
-import Menu from '~/components/menu.vue'
-import MenuModal from '~/components/menuModal.vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Product, Category } from '../types/types'
 

@@ -27,6 +27,33 @@ const items = ref<DropdownMenuItem[]>([
   }
 ])
 
+const { user, isAuthenticated, logout } = useAuth()
+
+const showLoginModal = ref(false)
+
+// Редирект, если пользователь уже авторизован
+watch(isAuthenticated, (authenticated) => {
+  if (authenticated) {
+    // Например, редирект на главную страницу
+    // await navigateTo('/')
+    console.log('User logged in successfully:', user.value)
+  }
+})
+
+// Открыть модалку входа
+const openLoginModal = () => {
+  showLoginModal.value = true
+}
+
+// Обработка успешного входа
+const handleLoginSuccess = (userData: any) => {
+  console.log('Login successful:', userData)
+  showLoginModal.value = false
+  
+  // Здесь можно добавить дополнительную логику после успешного входа
+  // Например, редирект или показ уведомления
+}
+
 </script>
 
 <template>
@@ -42,7 +69,7 @@ const items = ref<DropdownMenuItem[]>([
         <UButton to="/delivery" class="bg-amber-500 hover:bg-amber-600">Доставка</UButton>
       </div>
       <UButton to="/cart" class="bg-amber-500 hover:bg-amber-600" icon="i-heroicons-shopping-cart" />
-      <UButton to="/signup" class="bg-amber-500 hover:bg-amber-600">Увійти</UButton>
+      <UButton @click="openLoginModal" class="bg-amber-500 hover:bg-amber-600">Увійти</UButton>
     </nav>
     <!-- Мобильное меню (бургер через UDropdownMenu) -->
     <ClientOnly>
@@ -67,5 +94,10 @@ const items = ref<DropdownMenuItem[]>([
         </UDropdownMenu>
       </div>
     </ClientOnly>
+
+    <UserLoginModal 
+      v-model="showLoginModal"
+      @success="handleLoginSuccess"  
+    />
   </header>
 </template>
