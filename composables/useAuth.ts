@@ -1,269 +1,255 @@
-// composables/useAuth.ts
-interface User {
-    id: number
-    phone: string
-    name?: string
-    email?: string
-    createdAt: string
-    updatedAt: string
+import type { User, AuthState } from '~/types/auth'
+
+// Глобальное состояние аутентификации
+const authState = reactive<AuthState>({
+  user: null,
+  isAuthenticated: false,
+  isLoading: false
+})
+
+export const useAuth = () => {
+  const toast = useToast()
+
+  // Геттеры состояния
+  const user = computed(() => authState.user)
+  const isAuthenticated = computed(() => authState.isAuthenticated)
+  const isLoading = computed(() => authState.isLoading)
+
+  /**
+   * Валидация номера телефона (украинский формат)
+   */
+  const isPhoneValid = (phone: string): boolean => {
+    const phoneRegex = /^\+380\d{9}$/
+    return phoneRegex.test(phone)
   }
-  
-  interface AuthState {
-    user: User | null
-    isAuthenticated: boolean
-    isLoading: boolean
+
+  /**
+   * Валидация кода подтверждения
+   */
+  const isCodeValid = (code: string): boolean => {
+    return code.length === 4 && /^\d{4}$/.test(code)
   }
-  
-  // Глобальное состояние аутентификации
-  const authState = reactive<AuthState>({
-    user: null,
-    isAuthenticated: false,
-    isLoading: false
-  })
-  
-  export const useAuth = () => {
-    const toast = useToast()
-  
-    // Геттеры состояния
-    const user = computed(() => authState.user)
-    const isAuthenticated = computed(() => authState.isAuthenticated)
-    const isLoading = computed(() => authState.isLoading)
-  
-    /**
-     * Отправка кода подтверждения на номер телефона
-     */
-    const sendVerificationCode = async (phone: string): Promise<void> => {
-      try {
-        authState.isLoading = true
-        
-        // Временная заглушка - генерируем случайный 4-значный код
-        const code = Math.floor(1000 + Math.random() * 9000).toString()
-        
-        // В реальном приложении здесь будет API запрос
-        // const response = await $fetch('/api/auth/send-code', {
-        //   method: 'POST',
-        //   body: { phone }
-        // })
-        
-        // Временно логируем код в консоль
-        console.log(`🔐 Verification code for ${phone}: ${code}`)
-        
-        // Сохраняем код в localStorage для проверки (временное решение)
-        if (process.client) {
-          localStorage.setItem('verification_code', code)
-          localStorage.setItem('verification_phone', phone)
-          localStorage.setItem('code_sent_at', Date.now().toString())
-        }
-        
-        // Имитируем задержку сети
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-      } catch (error) {
-        console.error('Error sending verification code:', error)
-        throw new Error('Не вдалося надіслати код підтвердження')
-      } finally {
-        authState.isLoading = false
-      }
+
+  /**
+   * Форматирование номера телефона
+   */
+  const formatPhone = (value: string): string => {
+    // Удаляем все нецифровые символы
+    let digits = value.replace(/\D/g, '')
+    
+    // Если начинается с 380, добавляем +
+    if (digits.startsWith('380')) {
+      digits = '+' + digits
     }
-  
-    /**
-     * Проверка кода и вход/регистрация пользователя
-     */
-    const verifyCodeAndLogin = async (phone: string, code: string): Promise<User> => {
-      try {
-        authState.isLoading = true
-        
-        // Временная проверка кода из localStorage
-        if (process.client) {
-          const storedCode = localStorage.getItem('verification_code')
-          const storedPhone = localStorage.getItem('verification_phone')
-          const codeSentAt = localStorage.getItem('code_sent_at')
-          
-          // Проверяем, что код не истек (5 минут)
-          const fiveMinutesAgo = Date.now() - (5 * 60 * 1000)
-          if (codeSentAt && parseInt(codeSentAt) < fiveMinutesAgo) {
-            throw new Error('Код підтвердження застарів')
-          }
-          
-          // Временно принимаем любой 4-значный код для разработки
-          if (code.length !== 4 || !/^\d{4}$/.test(code)) {
-            throw new Error('Невірний код підтвердження')
-          }
-          
-          // В реальном приложении здесь будет API запрос
-          // const response = await $fetch('/api/auth/verify-code', {
-          //   method: 'POST',
-          //   body: { phone, code }
-          // })
-          
-          // Создаем мок пользователя
-          const mockUser: User = {
-            id: Math.floor(Math.random() * 1000000),
-            phone: phone,
-            name: `User ${phone.slice(-4)}`,
-            email: `user${phone.slice(-4)}@example.com`,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-          
-          // Имитируем задержку сети
-          await new Promise(resolve => setTimeout(resolve, 1500))
-          
-          // Обновляем состояние
-          authState.user = mockUser
-          authState.isAuthenticated = true
-          
-          // Сохраняем данные пользователя
-          if (process.client) {
-            localStorage.setItem('auth_user', JSON.stringify(mockUser))
-            localStorage.setItem('auth_token', `mock_token_${mockUser.id}`)
-            
-            // Очищаем временные данные кода
-            localStorage.removeItem('verification_code')
-            localStorage.removeItem('verification_phone')
-            localStorage.removeItem('code_sent_at')
-          }
-          
-          return mockUser
-        }
-        
-        throw new Error('Помилка при перевірці коду')
-        
-      } catch (error) {
-        console.error('Error verifying code:', error)
-        throw error instanceof Error ? error : new Error('Невірний код підтвердження')
-      } finally {
-        authState.isLoading = false
-      }
+    // Если начинается с 80, заменяем на +380
+    else if (digits.startsWith('80')) {
+      digits = '+3' + digits
     }
-  
-    /**
-     * Выход из системы
-     */
-    const logout = async (): Promise<void> => {
-      try {
-        authState.isLoading = true
-        
-        // В реальном приложении здесь будет API запрос
-        // await $fetch('/api/auth/logout', { method: 'POST' })
-        
-        // Очищаем состояние
-        authState.user = null
-        authState.isAuthenticated = false
-        
-        // Очищаем localStorage
-        if (process.client) {
-          localStorage.removeItem('auth_user')
-          localStorage.removeItem('auth_token')
-        }
-        
-        toast.add({
-          title: 'Успішно',
-          description: 'Ви вийшли з системи',
-          color: 'success'
-        })
-        
-      } catch (error) {
-        console.error('Error during logout:', error)
-        toast.add({
-          title: 'Помилка',
-          description: 'Помилка при виході з системи',
-          color: 'error'
-        })
-      } finally {
-        authState.isLoading = false
-      }
+    // Если начинается с 0, заменяем на +380
+    else if (digits.startsWith('0')) {
+      digits = '+38' + digits
     }
-  
-    /**
-     * Проверка токена и восстановление сессии
-     */
-    const checkAuth = async (): Promise<void> => {
-      if (!process.client) return
+    // Если только цифры без кода страны
+    else if (digits.length <= 9 && !digits.startsWith('380')) {
+      digits = '+380' + digits
+    }
+    
+    return digits.slice(0, 13) // Максимум +380XXXXXXXXX
+  }
+
+  /**
+   * Отправка кода подтверждения на номер телефона
+   */
+  const sendVerificationCode = async (phone: string): Promise<{ success: boolean; step?: string }> => {
+    if (!isPhoneValid(phone)) {
+      toast.add({
+        title: 'Помилка',
+        description: 'Введіть коректний номер телефону',
+        color: 'error'
+      })
+      return { success: false }
+    }
+
+    try {
+      authState.isLoading = true
       
-      try {
-        authState.isLoading = true
-        
-        const storedUser = localStorage.getItem('auth_user')
-        const storedToken = localStorage.getItem('auth_token')
-        
-        if (storedUser && storedToken) {
-          // В реальном приложении здесь будет проверка токена на сервере
-          // const response = await $fetch('/api/auth/verify-token', {
-          //   headers: { Authorization: `Bearer ${storedToken}` }
-          // })
-          
-          const user = JSON.parse(storedUser) as User
-          authState.user = user
-          authState.isAuthenticated = true
-        }
-        
-      } catch (error) {
-        console.error('Error checking auth:', error)
-        // Очищаем невалидные данные
-        localStorage.removeItem('auth_user')
-        localStorage.removeItem('auth_token')
-      } finally {
-        authState.isLoading = false
-      }
-    }
-  
-    /**
-     * Обновление данных пользователя
-     */
-    const updateUser = async (userData: Partial<User>): Promise<User> => {
-      if (!authState.user) {
-        throw new Error('Користувач не авторизований')
-      }
+      // Генерируем код (серверная логика, временно здесь)
+      const code = Math.floor(1000 + Math.random() * 9000).toString()
       
-      try {
-        authState.isLoading = true
-        
-        // В реальном приложении здесь будет API запрос
-        // const response = await $fetch(`/api/users/${authState.user.id}`, {
-        //   method: 'PATCH',
-        //   body: userData
-        // })
-        
-        const updatedUser: User = {
-          ...authState.user,
-          ...userData,
-          updatedAt: new Date().toISOString()
-        }
-        
-        authState.user = updatedUser
-        
-        // Обновляем в localStorage
-        if (process.client) {
-          localStorage.setItem('auth_user', JSON.stringify(updatedUser))
-        }
-        
-        return updatedUser
-        
-      } catch (error) {
-        console.error('Error updating user:', error)
-        throw new Error('Не вдалося оновити дані користувача')
-      } finally {
-        authState.isLoading = false
-      }
-    }
-  
-    // Инициализация при монтировании
-    if (process.client) {
-      checkAuth()
-    }
-  
-    return {
-      // State
-      user: readonly(user),
-      isAuthenticated: readonly(isAuthenticated),
-      isLoading: readonly(isLoading),
+      // Логируем код в консоль (временное решение)
+      console.log(`🔐 Verification code for ${phone}: ${code}`)
       
-      // Actions
-      sendVerificationCode,
-      verifyCodeAndLogin,
-      logout,
-      checkAuth,
-      updateUser
+      // Имитируем задержку
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      toast.add({
+        title: 'Успішно',
+        description: `Код підтвердження надіслано на номер ${phone}`,
+        color: 'success'
+      })
+      
+      return { success: true, step: 'code' }
+      
+    } catch (error) {
+      console.error('Error sending verification code:', error)
+      toast.add({
+        title: 'Помилка',
+        description: 'Не вдалося надіслати код підтвердження',
+        color: 'error'
+      })
+      return { success: false }
+    } finally {
+      authState.isLoading = false
     }
   }
+
+  /**
+   * Проверка кода и вход/регистрация пользователя
+   */
+  const verifyCodeAndLogin = async (phone: string, code: string): Promise<{ success: boolean; user?: User }> => {
+    if (!isCodeValid(code)) {
+      toast.add({
+        title: 'Помилка',
+        description: 'Код має містити 4 цифри',
+        color: 'error'
+      })
+      return { success: false }
+    }
+
+    try {
+      authState.isLoading = true
+      
+      // Имитируем задержку
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      // Просто логируем успешный вход
+      console.log(`✅ User with phone ${phone} successfully logged in`)
+      
+      // Обновляем состояние (минимально)
+      authState.isAuthenticated = true
+      
+      toast.add({
+        title: 'Успішно',
+        description: 'Ви увійшли в систему',
+        color: 'success'
+      })
+      
+      return { success: true }
+      
+    } catch (error) {
+      console.error('Error verifying code:', error)
+      toast.add({
+        title: 'Помилка',
+        description: 'Невірний код підтвердження',
+        color: 'error'
+      })
+      return { success: false }
+    } finally {
+      authState.isLoading = false
+    }
+  }
+
+  /**
+   * Выход из системы
+   */
+  const logout = async (): Promise<void> => {
+    try {
+      authState.isLoading = true
+      
+      // Очищаем состояние
+      authState.user = null
+      authState.isAuthenticated = false
+      
+      console.log('🚪 User logged out')
+      
+      toast.add({
+        title: 'Успішно',
+        description: 'Ви вийшли з системи',
+        color: 'success'
+      })
+      
+    } catch (error) {
+      console.error('Error during logout:', error)
+      toast.add({
+        title: 'Помилка',
+        description: 'Помилка при виході з системи',
+        color: 'error'
+      })
+    } finally {
+      authState.isLoading = false
+    }
+  }
+
+  /**
+   * Проверка токена и восстановление сессии
+   */
+  const checkAuth = async (): Promise<void> => {
+    // Заглушка - ничего не делаем
+    console.log('checkAuth called - stub implementation')
+  }
+
+  /**
+   * Обновление данных пользователя
+   */
+  const updateUser = async (userData: Partial<User>): Promise<User | null> => {
+    if (!authState.user) {
+      toast.add({
+        title: 'Помилка',
+        description: 'Користувач не авторизований',
+        color: 'error'
+      })
+      return null
+    }
+    
+    try {
+      authState.isLoading = true
+      
+      // Обновляем только в памяти
+      const updatedUser: User = {
+        ...authState.user,
+        ...userData,
+        updatedAt: new Date().toISOString()
+      }
+      
+      authState.user = updatedUser
+      
+      toast.add({
+        title: 'Успішно',
+        description: 'Дані користувача оновлено',
+        color: 'success'
+      })
+      
+      return updatedUser
+      
+    } catch (error) {
+      console.error('Error updating user:', error)
+      toast.add({
+        title: 'Помилка',
+        description: 'Не вдалося оновити дані користувача',
+        color: 'error'
+      })
+      return null
+    } finally {
+      authState.isLoading = false
+    }
+  }
+
+  return {
+    // State
+    user: readonly(user),
+    isAuthenticated: readonly(isAuthenticated),
+    isLoading: readonly(isLoading),
+    
+    // Validation helpers
+    isPhoneValid,
+    isCodeValid,
+    formatPhone,
+    
+    // Actions
+    sendVerificationCode,
+    verifyCodeAndLogin,
+    logout,
+    checkAuth,
+    updateUser
+  }
+}

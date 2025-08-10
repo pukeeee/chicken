@@ -27,6 +27,15 @@ const formData = ref<LoginFormData>({
   code: ''
 })
 
+const {
+  formatPhone,
+  isCodeValid,
+  isPhoneValid,
+  sendVerificationCode,
+  verifyCodeAndLogin,
+  isLoading
+} = useAuth()
+
 const toast = useToast()
 
 // Управление состоянием модального окна
@@ -34,42 +43,6 @@ const isOpen = computed({
   get: () => props.modelValue,
   set: (value: boolean) => emit('update:modelValue', value)
 })
-
-// Валидация номера телефона (украинский формат)
-const isPhoneValid = computed(() => {
-  const phoneRegex = /^\+380\d{9}$/
-  return phoneRegex.test(formData.value.phone)
-})
-
-// Валидация кода
-const isCodeValid = computed(() => {
-  return formData.value.code.length === 4 && /^\d{4}$/.test(formData.value.code)
-})
-
-// Форматирование номера телефона
-const formatPhone = (value: string) => {
-  // Удаляем все нецифровые символы
-  let digits = value.replace(/\D/g, '')
-  
-  // Если начинается с 380, добавляем +
-  if (digits.startsWith('380')) {
-    digits = '+' + digits
-  }
-  // Если начинается с 80, заменяем на +380
-  else if (digits.startsWith('80')) {
-    digits = '+3' + digits
-  }
-  // Если начинается с 0, заменяем на +380
-  else if (digits.startsWith('0')) {
-    digits = '+38' + digits
-  }
-  // Если только цифры без кода страны
-  else if (digits.length <= 9 && !digits.startsWith('380')) {
-    digits = '+380' + digits
-  }
-  
-  return digits.slice(0, 13) // Максимум +380XXXXXXXXX
-}
 
 // Обработка ввода номера телефона
 const handlePhoneInput = (event: Event) => {
@@ -100,84 +73,31 @@ const stopCountdown = () => {
   countdown.value = 0
 }
 
-// Отправка кода на телефон
-const sendCode = async () => {
-  if (!isPhoneValid.value) return
-
-  try {
-    loading.value = true
-    
-    // Здесь будет вызов API для отправки кода
-    const { sendVerificationCode } = useAuth()
-    await sendVerificationCode(formData.value.phone)
-    
-    // Переходим на следующий шаг
-    step.value = 'code'
-    formData.value.code = ''
-    startCountdown()
-    
-    toast.add({
-      title: 'Код відправлено',
-      description: `Код підтвердження надіслано на номер ${formData.value.phone}`,
-      color: 'success'
-    })
-    
-  } catch (error) {
-    console.error('Ошибка при отправке кода:', error)
-    toast.add({
-      title: 'Помилка',
-      description: 'Не вдалося надіслати код підтвердження',
-      color: 'error'
-    })
-  } finally {
-    loading.value = false
-  }
-}
-
 // Повторная отправка кода
 const resendCode = async () => {
   if (countdown.value > 0) return
-  await sendCode()
-}
-
-// Вход в систему
-const login = async () => {
-  if (!isCodeValid.value) return
-
-  try {
-    loading.value = true
-    
-    // Здесь будет вызов API для проверки кода и входа/регистрации
-    const { verifyCodeAndLogin } = useAuth()
-    const user = await verifyCodeAndLogin(formData.value.phone, formData.value.code)
-    
-    toast.add({
-      title: 'Успішно',
-      description: 'Ви успішно увійшли в систему',
-      color: 'success'
-    })
-    
-    emit('success', user)
-    handleClose()
-    
-  } catch (error) {
-    console.error('Ошибка при входе:', error)
-    toast.add({
-      title: 'Помилка',
-      description: 'Невірний код підтвердження',
-      color: 'error'
-    })
-  } finally {
-    loading.value = false
+  
+  const result = await sendVerificationCode(formData.value.phone)
+  if (result.success) {
+    startCountdown()
   }
 }
 
 // Обработка основного действия
 const handleSubmit = async () => {
   if (step.value === 'phone') {
-    await sendCode()
+    const result = await sendVerificationCode(formData.value.phone)
+    if (result.success) {
+      step.value = 'code'
+      formData.value.code = ''
+      startCountdown()
+    }
   } else {
-    await login()
+    const result = await verifyCodeAndLogin(formData.value.phone, formData.value.code)
+    if (result.success) {
+      emit('success', result.user)
+      handleClose()
+    }
   }
 }
 
@@ -190,7 +110,7 @@ const goBackToPhone = () => {
 
 // Закрытие модального окна
 const handleClose = () => {
-  if (!loading.value) {
+  if (!isLoading) {
     isOpen.value = false
   }
 }
@@ -216,10 +136,10 @@ onUnmounted(() => {
 
 // Горячие клавиши
 const handleKeyPress = (event: KeyboardEvent) => {
-  if (event.key === 'Enter' && !loading.value) {
-    if (step.value === 'phone' && isPhoneValid.value) {
+  if (event.key === 'Enter' && !isLoading) {
+    if (step.value === 'phone' && isPhoneValid(formData.value.phone)) {
       handleSubmit()
-    } else if (step.value === 'code' && isCodeValid.value) {
+    } else if (step.value === 'code' && isCodeValid(formData.value.code)) {
       handleSubmit()
     }
   }
@@ -229,7 +149,7 @@ const handleKeyPress = (event: KeyboardEvent) => {
 <template>
   <UModal 
     v-model:open="isOpen"
-    :dismissible="!loading"
+    :dismissible="!isLoading"
     title="Вхід в систему"
     description="Увійдіть за допомогою номера телефону"
     :ui="{ content: 'sm:max-w-md' }"
@@ -241,14 +161,14 @@ const handleKeyPress = (event: KeyboardEvent) => {
           label="Номер телефону" 
           name="phone"
           required
-          :error="formData.phone && !isPhoneValid ? 'Невірний формат номера телефону' : undefined"
+          :error="formData.phone && !isPhoneValid(formData.phone) ? 'Невірний формат номера телефону' : undefined"
         >
           <UInput
             v-model="formData.phone"
             type="tel"
             placeholder="+380XXXXXXXXX"
             autocomplete="tel"
-            :disabled="loading || step === 'code'"
+            :disabled="isLoading || step === 'code'"
             @input="handlePhoneInput"
             :ui="{
               base: 'transition-all duration-200'
@@ -274,7 +194,7 @@ const handleKeyPress = (event: KeyboardEvent) => {
             label="Код підтвердження" 
             name="code"
             required
-            :error="formData.code && !isCodeValid ? 'Код має містити 4 цифри' : undefined"
+            :error="formData.code && !isCodeValid(formData.code) ? 'Код має містити 4 цифри' : undefined"
           >
             <UInput
               v-model="formData.code"
@@ -282,7 +202,7 @@ const handleKeyPress = (event: KeyboardEvent) => {
               placeholder="0000"
               maxlength="4"
               autocomplete="one-time-code"
-              :disabled="loading"
+              :disabled="isLoading"
               class="text-center tracking-widest text-lg"
             >
               <template #leading>
@@ -297,7 +217,7 @@ const handleKeyPress = (event: KeyboardEvent) => {
               </p>
               <button
                 type="button"
-                :disabled="countdown > 0 || loading"
+                :disabled="countdown > 0 || isLoading"
                 @click="resendCode"
                 class="text-primary-600 hover:text-primary-500 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
               >
@@ -322,7 +242,7 @@ const handleKeyPress = (event: KeyboardEvent) => {
               variant="ghost"
               size="sm"
               @click="goBackToPhone"
-              :disabled="loading"
+              :disabled="isLoading"
             >
               <template #leading>
                 <UIcon name="i-lucide-arrow-left" class="w-4 h-4" />
@@ -340,14 +260,14 @@ const handleKeyPress = (event: KeyboardEvent) => {
           color="neutral" 
           variant="outline" 
           @click="handleClose"
-          :disabled="loading"
+          :disabled="isLoading"
         >
           Скасувати
         </UButton>
         <UButton 
           @click="handleSubmit"
-          :loading="loading"
-          :disabled="step === 'phone' ? !isPhoneValid : !isCodeValid"
+          :loading="isLoading"
+          :disabled="step === 'phone' ? !isPhoneValid(formData.phone) : !isCodeValid(formData.code)"
           class="min-w-24"
         >
           {{ step === 'phone' ? 'Далі' : 'Увійти' }}
