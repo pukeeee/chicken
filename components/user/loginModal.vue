@@ -194,13 +194,13 @@ const handleKeyPress = (event: KeyboardEvent) => {
             label="Код підтвердження" 
             name="code"
             required
-            :error="formData.code && !isCodeValid(formData.code) ? 'Код має містити 4 цифри' : undefined"
+            :error="formData.code && !isCodeValid(formData.code) ? 'Код має містити 6 цифри' : undefined"
           >
             <UInput
               v-model="formData.code"
               type="text"
-              placeholder="0000"
-              maxlength="4"
+              placeholder="CH1K3N"
+              maxlength="6"
               autocomplete="one-time-code"
               :disabled="isLoading"
               class="text-center tracking-widest text-lg"

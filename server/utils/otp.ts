@@ -6,16 +6,25 @@ const client = createClient({
 
 client.on('error', (err) => console.error('Redis error:', err))
 
-await client.connect()
+// Initialize Redis connection
+let isConnected = false
+const initRedis = async () => {
+  if (!isConnected) {
+    await client.connect()
+    isConnected = true
+  }
+}
 
 export const otpService = {
   // Сохранить код
   async set(key: string, code: string, ttl: number = 300) {
+    await initRedis()
     await client.set(`otp:${key}`, code, { EX: ttl })
   },
 
   // Получить и удалить (одноразовый)
   async get(key: string) {
+    await initRedis()
     const code = await client.get(`otp:${key}`)
     if (code) await client.del(`otp:${key}`) // одноразовый
     return code
@@ -23,6 +32,7 @@ export const otpService = {
 
   // Проверить без удаления (для дебага)
   async verify(key: string, input: string) {
+    await initRedis()
     const code = await client.get(`otp:${key}`)
     return code === input
   }

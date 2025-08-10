@@ -27,7 +27,7 @@ export const useAuth = () => {
    * Валидация кода подтверждения
    */
   const isCodeValid = (code: string): boolean => {
-    return code.length === 4 && /^\d{4}$/.test(code)
+    return code.length === 6 && /^[123456789ABCDEFGHJKLMNPQRSTUVWXYZ]{6}$/.test(code)
   }
 
   /**
@@ -106,7 +106,7 @@ export const useAuth = () => {
     if (!isCodeValid(code)) {
       toast.add({
         title: 'Помилка',
-        description: 'Код має містити 4 цифри',
+        description: 'Код має містити 6 символів',
         color: 'error'
       })
       return { success: false }
