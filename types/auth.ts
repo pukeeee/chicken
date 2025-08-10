@@ -1,16 +1,27 @@
+// Серверный интерфейс - полный пользователь (для БД и JWT)
 export interface User {
   id: number
   phone: string
-  name?: string
-  email?: string
-  role?: string
-  isActive?: boolean
+  name: string | null
+  email: string | null
+  password: string | null
+  role: string
+  isActive: boolean
+  token: string | null
+  createdAt: Date
+}
+
+// Клиентский интерфейс - то что видит пользователь
+export interface PublicUser {
+  id: number
+  phone: string
+  name: string | null
+  email: string | null
   createdAt: string
-  updatedAt?: string
 }
 
 export interface AuthState {
-  user: User | null
+  user: PublicUser | null
   isAuthenticated: boolean
   isLoading: boolean
 }
@@ -21,6 +32,6 @@ export interface LoginCredentials {
 }
 
 export interface AuthResponse {
-  user: User
+  user: PublicUser  // ← Клиенту возвращаем PublicUser
   token: string
 }

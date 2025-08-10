@@ -1,4 +1,4 @@
-import type { User, AuthState } from '~/types/auth'
+import type { User, AuthState, PublicUser } from '~/types/auth'
 
 // Глобальное состояние аутентификации
 const authState = reactive<AuthState>({
@@ -73,14 +73,10 @@ export const useAuth = () => {
     try {
       authState.isLoading = true
       
-      // Генерируем код (серверная логика, временно здесь)
-      const code = Math.floor(1000 + Math.random() * 9000).toString()
-      
-      // Логируем код в консоль (временное решение)
-      console.log(`🔐 Verification code for ${phone}: ${code}`)
-      
-      // Имитируем задержку
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const data = await $fetch('/api/users/verify', {
+        method: 'POST',
+        body: {phone}
+      })
       
       toast.add({
         title: 'Успішно',
@@ -118,14 +114,14 @@ export const useAuth = () => {
 
     try {
       authState.isLoading = true
+
+      const data = await $fetch('/api/users/login',{
+        method: 'POST',
+        body: {phone, code}
+      })
       
-      // Имитируем задержку
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // Просто логируем успешный вход
-      console.log(`✅ User with phone ${phone} successfully logged in`)
-      
-      // Обновляем состояние (минимально)
+      // Обновляем состояние
+      authState.user = data.user
       authState.isAuthenticated = true
       
       toast.add({
@@ -191,7 +187,7 @@ export const useAuth = () => {
   /**
    * Обновление данных пользователя
    */
-  const updateUser = async (userData: Partial<User>): Promise<User | null> => {
+  const updateUser = async (userData: Partial<PublicUser>): Promise<PublicUser | null> => {
     if (!authState.user) {
       toast.add({
         title: 'Помилка',
@@ -205,10 +201,10 @@ export const useAuth = () => {
       authState.isLoading = true
       
       // Обновляем только в памяти
-      const updatedUser: User = {
+      const updatedUser: PublicUser = {
         ...authState.user,
         ...userData,
-        updatedAt: new Date().toISOString()
+        // updatedAt: new Date().toISOString()
       }
       
       authState.user = updatedUser
