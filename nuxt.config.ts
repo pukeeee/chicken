@@ -9,5 +9,9 @@ export default defineNuxtConfig({
   modules: [
     '@pinia/nuxt',
     '@nuxt/ui'
-  ]
+  ],
+  ssr: true,
+  experimental: {
+    payloadExtraction: false
+  }
 })

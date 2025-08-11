@@ -19,45 +19,15 @@ const authState = reactive<AuthState>({
 export const useAuth = () => {
   const toast = useToast()
 
-  /**
-   * @description Умная проверка сессии пользователя с помощью useLazyAsyncData.
-   * - `user-session`: Уникальный ключ. Nuxt использует его для кеширования данных, чтобы не делать лишних запросов.
-   * - `() => $fetch(...)`: Асинхронная функция, которая делает запрос к API для получения данных пользователя.
-   * - `server: false`: Запрос будет выполняться только на стороне клиента. Это предотвращает выполнение на сервере при SSR.
-   * - `immediate: false`: Запрос не будет выполняться автоматически при загрузке компонента. Мы вызываем его вручную через `checkAuth()`.
-   * - `transform`: Функция для преобразования полученных данных. Здесь мы обновляем глобальное состояние `authState`.
-   */
-  const { pending, refresh: refreshAuthSession } = useLazyAsyncData('user-session',
-    () => $fetch<{ success: boolean, user?: PublicUser }>('/api/users/'),
-    {
-      server: false, // Проверять сессию только на клиенте
-      immediate: false, // Не запускать сразу при инициализации
-      transform: (response) => {
-        // Обновляем централизованное состояние
-        if (response && response.success && response.user) {
-          authState.user = response.user
-          authState.isAuthenticated = true
-        } else {
-          authState.user = null
-          authState.isAuthenticated = false
-        }
-        return response
-      },
-    }
-  )
-
-  // Синхронизируем состояние загрузки из useLazyAsyncData с нашим глобальным состоянием.
-  watch(pending, (newValue) => {
-    authState.isLoading = newValue
+  // Геттеры состояния
+  const user = computed(() => {
+    return authState.user
+  })
+  
+  const isAuthenticated = computed(() => {
+    return authState.isAuthenticated
   })
 
-  // --- Геттеры состояния (вычисляемые свойства) ---
-
-  /** @description Реактивные данные текущего пользователя. */
-  const user = computed(() => authState.user)
-  /** @description Реактивный флаг, указывающий, авторизован ли пользователь. */
-  const isAuthenticated = computed(() => authState.isAuthenticated)
-  /** @description Реактивный флаг состояния загрузки. */
   const isLoading = computed(() => authState.isLoading)
 
   // --- Хелперы для валидации и форматирования ---
@@ -104,7 +74,9 @@ export const useAuth = () => {
     return digits.slice(0, 13) // Обрезаем до нужной длины
   }
 
-  // --- Основные действия (Actions) ---
+  /////////////////////////////////////////
+  // --- Основные действия (Actions) --- //
+  /////////////////////////////////////////
 
   /**
    * @description Отправляет код подтверждения на указанный номер телефона.
@@ -228,11 +200,53 @@ export const useAuth = () => {
   }
 
   /**
-   * @description Проверяет сессию пользователя, запуская `useLazyAsyncData`.
+   * @description Проверяет сессию пользователя.
    * Используется для восстановления сессии при загрузке приложения.
    */
   const checkAuth = async (): Promise<void> => {
-    await refreshAuthSession()
+    try {
+      authState.isLoading = true
+      
+      // Пробрасываем cookie на сервере для SSR-запроса
+      const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+      
+      const data = await $fetch<{ success: boolean, user: PublicUser }>('/api/users/', {
+        method: 'GET',
+        headers
+      })
+      
+      if (data.success && data.user) {
+        authState.user = data.user
+        authState.isAuthenticated = true
+      } else {
+        authState.user = null
+        authState.isAuthenticated = false
+      }
+      
+    } catch (error: any) {
+      authState.user = null
+      authState.isAuthenticated = false
+    } finally {
+      authState.isLoading = false
+    }
+  }
+
+  /**
+   * @description Инициализирует сессию при загрузке приложения.
+   * Проверяет наличие токена перед выполнением запроса.
+   */
+  const initializeAuth = async (): Promise<void> => {
+    // Проверяем наличие токена
+    const userToken = useCookie('user_token')
+    if (!userToken.value) {
+      // Если токена нет, очищаем состояние без запроса
+      authState.user = null
+      authState.isAuthenticated = false
+      return
+    }
+
+    // Если токен есть, проверяем сессию
+    await checkAuth()
   }
 
   /**
@@ -296,6 +310,7 @@ export const useAuth = () => {
     verifyCodeAndLogin,
     logout,
     checkAuth,
+    initializeAuth,
     updateUser
   }
 }

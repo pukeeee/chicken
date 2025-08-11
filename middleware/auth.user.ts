@@ -4,7 +4,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const { isAuthenticated, checkAuth } = useAuth()
 
-  // Если уже проверена авторизация и пользователь авторизован
+  // Если уже авторизован — пропускаем
   if (isAuthenticated.value) return
 
   // Быстрая проверка наличия токена
@@ -13,15 +13,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo('/')
   }
 
-  // Проверяем авторизацию (с кэшированием)
-  if (import.meta.client) {
-    try {
-      await checkAuth()
-      if (!isAuthenticated.value) {
-        return navigateTo('/')
-      }
-    } catch (error) {
+  // Если токен есть, но состояние ещё не установлено — проверяем сессию
+  try {
+    await checkAuth()
+    if (!isAuthenticated.value) {
       return navigateTo('/')
     }
+  } catch (error) {
+    return navigateTo('/')
   }
 })

@@ -1,7 +1,8 @@
 <script setup>
 import { onMounted } from 'vue'
 
-onMounted(() => {
+onMounted(async () => {
+  // Инициализируем корзину
   useCart()
 })
 </script>
