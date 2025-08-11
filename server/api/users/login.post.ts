@@ -53,12 +53,14 @@ export default defineEventHandler(async (event) => {
     await loginService.saveUserToken(user.id, token)
 
     // Устанавливаем cookie с токеном
-    setCookie(event, 'user-token', token, {
+    setCookie(event, 'user_token', token, {
       httpOnly: true,
       secure: true,
       sameSite: 'strict',
       maxAge: 60 * 60 * 24 * 30 // 30 дней
     })
+
+    // console.log('🍪 Cookie set: user_token =', token.substring(0, 20) + '...')
 
     return {
       success: true,

@@ -39,3 +39,10 @@ export async function createUser(phone: string) {
     }
   })
 }
+
+export async function updateUserById(id: number, data: { name?: string | null; email?: string | null }) {
+  return await prisma.user.update({
+    where: { id },
+    data
+  })
+}
