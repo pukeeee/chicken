@@ -7,6 +7,12 @@ interface MigrationsResponse {
   upToDate: boolean
 }
 
+/**
+ * @file Nuxt-плагин для проверки состояния базы данных.
+ * @description Этот плагин запускается на стороне клиента в режиме разработки.
+ * Он отправляет запросы к API для проверки здоровья БД и статуса миграций,
+ * выводя результаты в консоль браузера для удобной отладки.
+ */
 export default defineNuxtPlugin(async () => {
   if (import.meta.client && import.meta.dev) {
     try {

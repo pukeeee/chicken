@@ -1,5 +1,11 @@
 import { prisma } from './client'
 
+/**
+ * @summary Проверяет статус миграций Prisma.
+ * @description Эта функция выполняет прямой SQL-запрос к таблице `_prisma_migrations`,
+ * чтобы определить, есть ли миграции, которые еще не были успешно применены (т.е. `finished_at` is NULL).
+ * @returns {Promise<boolean>} `true`, если все миграции применены, иначе `false`.
+ */
 export const checkMigrations = async (): Promise<boolean> => {
   try {
     // Проверяем, что все миграции применены
