@@ -1,4 +1,5 @@
 import { getAllProducts, getProductById, getAllCategoriesWithProducts } from '../repositories/menu.repository'
+import { withCache } from '../utils/cache'
 
 // Сервис для получения всех продуктов
 export async function fetchAllProducts() {
@@ -13,13 +14,29 @@ export async function fetchProductById(id: number) {
   return getProductById(id)
 }
 
-// Сервис для получения всех категорий с продуктами
+/**
+ * Получает все категории вместе с вложенными продуктами.
+ * Результат этой функции кэшируется на стороне сервера для повышения производительности.
+ * @returns - Массив категорий с продуктами.
+ */
 export async function fetchAllCategoriesWithProducts() {
-  const categories = await getAllCategoriesWithProducts()
-  return categories.map(category => ({
-    ...category,
-    products: category.products.map(({ id, name, price, image }) => ({
-      id, name, price, image
-    }))
-  }))
+  // Используем обертку `withCache` для выполнения и кэширования запроса.
+  return withCache(
+    { 
+      key: 'menu:categories', // Получаем ключ из централизованного хелпера `cacheKeys`.
+      ttl: 300  // 5 минут
+    },
+    // Эта асинхронная функция будет вызвана только в том случае,
+    // если данные по указанному ключу отсутствуют в кэше.
+    async () => {
+      const categories = await getAllCategoriesWithProducts()
+      // Оставляем только необходимые поля для фронтенда, чтобы уменьшить объем данных.
+      return categories.map(category => ({
+        ...category,
+        products: category.products.map(({ id, name, price, image }) => ({
+          id, name, price, image
+        }))
+      }))
+    }
+  )
 }
