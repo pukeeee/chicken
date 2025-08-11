@@ -7,25 +7,14 @@ const authState = reactive<AuthState>({
   isLoading: false
 })
 
-// Добавляем отладку для отслеживания изменений состояния
-// watch(() => authState.isAuthenticated, (newValue, oldValue) => {
-//   console.log('🔄 authState.isAuthenticated changed from', oldValue, 'to', newValue)
-// })
-
-// watch(() => authState.user, (newValue, oldValue) => {
-//   console.log('🔄 authState.user changed from', oldValue?.phone || 'null', 'to', newValue?.phone || 'null')
-// })
-
 export const useAuth = () => {
   const toast = useToast()
 
   // Геттеры состояния
   const user = computed(() => {
-    // console.log('🔄 computed user called, returning:', authState.user?.phone || 'null')
     return authState.user
   })
   const isAuthenticated = computed(() => {
-    // console.log('🔄 computed isAuthenticated called, returning:', authState.isAuthenticated)
     return authState.isAuthenticated
   })
   const isLoading = computed(() => authState.isLoading)
@@ -145,7 +134,7 @@ export const useAuth = () => {
         color: 'success'
       })
       
-      return { success: true }
+      return { success: true} // Возвращаем пользователя
       
     } catch (error) {
       console.error('Error verifying code:', error)
@@ -176,20 +165,15 @@ export const useAuth = () => {
       authState.user = null
       authState.isAuthenticated = false
       
-      // console.log('🚪 User logged out')
-      
       toast.add({
         title: 'Успішно',
         description: 'Ви вийшли з системи',
         color: 'success'
       })
 
-      // TODO проверка чтобы не было редиректа если юзер не в личном кабинете
-      // Редирект на главную страницу
       await navigateTo('/')
       
     } catch (error) {
-      // console.error('Error during logout:', error)
       toast.add({
         title: 'Помилка',
         description: 'Помилка при виході з системи',
@@ -200,7 +184,6 @@ export const useAuth = () => {
     }
   }
 
-  // Интерфейс для ответа API проверки авторизации
   interface CheckAuthResponse {
     success: boolean
     user: PublicUser
@@ -211,45 +194,25 @@ export const useAuth = () => {
    */
   const checkAuth = async (): Promise<void> => {
     try {
-      // console.log('🔍 checkAuth debug:')
-      // console.log('- Starting auth check')
-      
       authState.isLoading = true
       
-      // Токен будет автоматически отправлен в httpOnly cookie
       const data = await $fetch<CheckAuthResponse>('/api/users/', {
         method: 'GET'
       })
       
-      // console.log('🔍 API response data:', data)
-      
-      // Проверяем успешность ответа
       if (data.success && data.user) {
-        // Восстанавливаем состояние пользователя
         authState.user = data.user
         authState.isAuthenticated = true
-        
-        // console.log('✅ Auth restored for user:', data.user.phone)
-        // console.log('✅ authState.isAuthenticated set to:', authState.isAuthenticated)
       } else {
-        // Если ответ неуспешный, очищаем состояние
         authState.user = null
         authState.isAuthenticated = false
-        
-        // console.log('❌ Auth check returned false success')
       }
       
     } catch (error: any) {
-      // console.error('❌ Auth check failed:', error)
-      
-      // Очищаем состояние при ошибке
       authState.user = null
       authState.isAuthenticated = false
-      
-      // console.log('❌ Auth state cleared due to error')
     } finally {
       authState.isLoading = false
-      // console.log('🔍 Final authState.isAuthenticated:', authState.isAuthenticated)
     }
   }
 
@@ -269,7 +232,6 @@ export const useAuth = () => {
     try {
       authState.isLoading = true
       
-      // Отправляем данные на сервер
       const data = await $fetch('/api/users/', {
         method: 'PATCH',
         body: {
@@ -278,7 +240,6 @@ export const useAuth = () => {
         }
       })
       
-      // Обновляем состояние пользователя
       authState.user = data.user
       
       toast.add({

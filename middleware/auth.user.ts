@@ -1,38 +1,26 @@
 export default defineNuxtRouteMiddleware(async (to) => {
   // Проверяем только пользовательские роуты
-  if (!to.path.startsWith('/users')) {
-    return
+  if (!to.path.startsWith('/users')) return
+
+  const { isAuthenticated, checkAuth } = useAuth()
+
+  // Если уже проверена авторизация и пользователь авторизован
+  if (isAuthenticated.value) return
+
+  // Быстрая проверка наличия токена
+  const userToken = useCookie('user_token')
+  if (!userToken.value) {
+    return navigateTo('/')
   }
 
-  // Получаем состояние авторизации
-  const { isAuthenticated, checkAuth } = useAuth()
-  
-  // Проверяем авторизацию при переходе на защищенную страницу
+  // Проверяем авторизацию (с кэшированием)
   if (import.meta.client) {
-    // На клиенте сначала проверяем текущее состояние
-    if (!isAuthenticated.value) {
-      // Пытаемся восстановить сессию из cookie
+    try {
       await checkAuth()
-      
-      // Если после проверки пользователь все еще не авторизован
       if (!isAuthenticated.value) {
         return navigateTo('/')
       }
-    }
-  } else {
-    // На сервере проверяем наличие токена в cookie
-    const tokenCookie = useCookie('user_token')
-    if (!tokenCookie.value) {
-      return navigateTo('/')
-    }
-    
-    // Дополнительно проверяем токен на сервере через новый API
-    try {
-      await $fetch('/api/users/', {
-        method: 'GET'
-      })
     } catch (error) {
-      // Если токен недействителен, редиректим
       return navigateTo('/')
     }
   }

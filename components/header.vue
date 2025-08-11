@@ -109,7 +109,7 @@ const openLoginModal = () => {
 }
 
 // Обработка успешного входа
-const handleLoginSuccess = (userData: any) => {
+const handleLoginSuccess = () => {
   showLoginModal.value = false
 }
 
