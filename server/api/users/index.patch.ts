@@ -1,4 +1,4 @@
-import { toPublicUser } from '../../services/users/usersService'
+import { toPublicUser } from '../../services/users/userService'
 import { updateUserById } from '~/server/repositories/user.repository'
 
 export default defineEventHandler(async (event) => {

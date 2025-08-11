@@ -1,6 +1,5 @@
 import { codeService } from '~/server/services/users/codeService'
 import { loginService } from '~/server/services/users/loginService'
-import { createToken } from '~/server/utils/jwt'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -33,7 +32,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Получаем или создаем пользователя через loginService
-    const user = await loginService.getOrCreateUser(phone)
+    const { user, token } = await loginService.getOrCreateUser(phone)
 
     if (!user) {
       throw createError({
@@ -41,16 +40,6 @@ export default defineEventHandler(async (event) => {
         statusMessage: 'Помилка створення користувача'
       })
     }
-
-    // Генерируем JWT токен
-    const token = createToken({ 
-      id: user.id, 
-      role: user.role || 'USER',
-      phone: user.phone 
-    })
-
-    // Сохраняем токен в БД
-    await loginService.saveUserToken(user.id, token)
 
     // Устанавливаем cookie с токеном
     setCookie(event, 'user_token', token, {

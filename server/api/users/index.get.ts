@@ -1,4 +1,4 @@
-import { getUserByToken } from '../../services/users/usersService'
+import { getUserByToken } from '../../services/users/userService'
 
 export default defineEventHandler(async (event) => {
   try {
