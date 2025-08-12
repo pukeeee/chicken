@@ -11,7 +11,17 @@ export default defineNuxtConfig({
     '@nuxt/ui'
   ],
   ssr: true,
-  experimental: {
-    payloadExtraction: false
+  pinia: {
+    storesDirs: ['./stores/**']
+  },
+  // Оптимизация сборки
+  nitro: {
+    // Кэширование на стороне сервера
+    storage: {
+      redis: {
+        driver: 'redis',
+        // конфигурация Redis если используется
+      }
+    }
   }
 })

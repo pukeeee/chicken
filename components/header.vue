@@ -2,8 +2,6 @@
 import { ref, watch, onMounted } from 'vue'
 import type { DropdownMenuItem } from '@nuxt/ui'
 
-const dropdownOpen = ref(false)
-
 // Элементы мобильного меню для неавторизованных пользователей
 const guestMenuItems = ref<DropdownMenuItem[]>([
   {
@@ -81,27 +79,17 @@ const userDropdownItems = ref<DropdownMenuItem[]>([
   }
 ])
 
-const { user, isAuthenticated, logout, checkAuth } = useAuth()
-
+const dropdownOpen = ref(false)
 const showLoginModal = ref(false)
 
-// Проверяем авторизацию при загрузке компонента
-onMounted(async () => {
-  // console.log('🔍 Header: onMounted - checking auth...')
-  await checkAuth()
-  // console.log('🔍 Header: after checkAuth - isAuthenticated:', isAuthenticated.value)
-  // console.log('🔍 Header: after checkAuth - user:', user.value)
-})
+const { 
+  isAuthenticated, 
+  isInitialized,
+  isLoading,
+  userName,
+  logout 
+} = useAuth()
 
-// Следим за изменениями состояния авторизации
-watch(isAuthenticated, (newValue) => {
-  // console.log('🔍 Header: isAuthenticated changed to:', newValue)
-}, { immediate: true })
-
-// Следим за изменениями пользователя
-watch(user, (newValue) => {
-  // console.log('🔍 Header: user changed to:', newValue?.phone || 'null')
-}, { immediate: true })
 
 // Открыть модалку входа
 const openLoginModal = () => {
@@ -118,6 +106,14 @@ const handleLogout = async () => {
   await logout()
 }
 
+// Вычисляемое свойство для определения, что показывать
+const shouldShowAuthButton = computed(() => {
+  return isInitialized.value && !isAuthenticated.value
+})
+
+const shouldShowUserMenu = computed(() => {
+  return isInitialized.value && isAuthenticated.value
+})
 </script>
 
 <template>
@@ -135,43 +131,54 @@ const handleLogout = async () => {
       </div>
       <UButton to="/cart" class="bg-amber-500 hover:bg-amber-600" icon="i-heroicons-shopping-cart" />
       
-      <!-- Показываем кнопку входа или дропдаун пользователя -->
-      <template v-if="!isAuthenticated">
-        <UButton 
-          @click="openLoginModal" 
-          class="bg-amber-500 hover:bg-amber-600"
-          icon="i-lucide-user"
-        >
-          Увійти
-        </UButton>
-      </template>
-      
-      <template v-else>
-        <!-- Дропдаун для авторизованного пользователя -->
-        <UDropdownMenu
-          :items="userDropdownItems"
-          :content="{ align: 'end', side: 'bottom', sideOffset: 8 }"
-          :ui="{
-            content: 'bg-white border border-gray-200 shadow-lg',
-            item: 'hover:bg-gray-50',
-            itemLeadingIcon: 'text-amber-500'
-          }"
-        >
+      <!-- Десктоп: рендерим только на клиенте, чтобы избежать SSR/CSR мисматча -->
+      <ClientOnly>
+        <template #fallback>
+          <div class="w-20 h-10 bg-amber-400 rounded"></div>
+        </template>
+
+        <!-- Показываем кнопку входа для неавторизованных -->
+        <template v-if="shouldShowAuthButton">
           <UButton 
+            @click="openLoginModal" 
             class="bg-amber-500 hover:bg-amber-600"
             icon="i-lucide-user"
-            :trailing="true"
+            :loading="isLoading"
           >
-            <UIcon name="i-lucide-chevron-down" class="w-4 h-4 ml-1" />
+            Увійти
           </UButton>
-        </UDropdownMenu>
-      </template>
+        </template>
+        
+        <!-- Показываем дропдаун для авторизованных -->
+        <template v-else-if="shouldShowUserMenu">
+          <UDropdownMenu
+            :items="userDropdownItems"
+            :content="{ align: 'end', side: 'bottom', sideOffset: 8 }"
+            :ui="{
+              content: 'bg-white border border-gray-200 shadow-lg',
+              item: 'hover:bg-gray-50',
+              itemLeadingIcon: 'text-amber-500'
+            }"
+          >
+            <UButton 
+              class="bg-amber-500 hover:bg-amber-600"
+              icon="i-lucide-user"
+              :trailing="true"
+              :loading="isLoading"
+            >
+              {{ userName }}
+              <UIcon name="i-lucide-chevron-down" class="w-4 h-4 ml-1" />
+            </UButton>
+          </UDropdownMenu>
+        </template>
+      </ClientOnly>
     </nav>
     
     <!-- Мобильное меню (бургер через UDropdownMenu) -->
     <ClientOnly>
       <div class="sm:hidden">
         <UDropdownMenu
+          v-if="isInitialized"
           v-model:open="dropdownOpen"
           :items="isAuthenticated ? authMenuItems : guestMenuItems"
           :content="{ align: 'end', side: 'bottom', sideOffset: 8 }"
@@ -186,9 +193,11 @@ const handleLogout = async () => {
             icon="i-lucide-menu"
             class="bg-amber-500 hover:bg-amber-600 text-white"
             variant="solid"
+            :loading="isLoading"
             @click.stop
           />
         </UDropdownMenu>
+        <div v-else class="w-10 h-10 bg-amber-400 rounded"></div>
       </div>
     </ClientOnly>
 

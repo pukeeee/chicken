@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 interface LoginFormData {
   phone: string
   code: string
@@ -17,7 +16,6 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const loading = ref(false)
 const step = ref<'phone' | 'code'>('phone')
 const countdown = ref(0)
 const countdownInterval = ref<NodeJS.Timeout | null>(null)
@@ -27,6 +25,7 @@ const formData = ref<LoginFormData>({
   code: ''
 })
 
+// Используем новый composable
 const {
   formatPhone,
   isCodeValid,
@@ -35,8 +34,6 @@ const {
   verifyCodeAndLogin,
   isLoading
 } = useAuth()
-
-const toast = useToast()
 
 // Управление состоянием модального окна
 const isOpen = computed({
@@ -110,7 +107,7 @@ const goBackToPhone = () => {
 
 // Закрытие модального окна
 const handleClose = () => {
-  if (!isLoading) {
+  if (!isLoading.value) {
     isOpen.value = false
   }
 }
@@ -136,7 +133,7 @@ onUnmounted(() => {
 
 // Горячие клавиши
 const handleKeyPress = (event: KeyboardEvent) => {
-  if (event.key === 'Enter' && !isLoading) {
+  if (event.key === 'Enter' && !isLoading.value) {
     if (step.value === 'phone' && isPhoneValid(formData.value.phone)) {
       handleSubmit()
     } else if (step.value === 'code' && isCodeValid(formData.value.code)) {

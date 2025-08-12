@@ -1,39 +1,35 @@
-import { getUserByToken } from '../../services/users/userService'
-
 export default defineEventHandler(async (event) => {
   try {
-    // console.log('🔍 Debug /api/users GET:')
-    // console.log('- event.context.user:', event.context.user ? 'EXISTS' : 'NOT_FOUND')
-    // console.log('- event.context.isAuthenticated:', event.context.isAuthenticated)
-    
-    // Проверяем, есть ли пользователь в контексте (установлен middleware)
-    if (!event.context.user || !event.context.isAuthenticated) {
-      // Если пользователь не авторизован, возвращаем успех с пустыми данными
-      // Это нужно для корректной работы на клиенте
+    // Данные пользователя уже проверены и добавлены в контекст middleware'ом
+    const user = event.context.user
+    const isAuthenticated = event.context.isAuthenticated
+
+    if (!user || !isAuthenticated) {
       return {
         success: false,
-        message: 'User not authenticated'
+        user: null,
+        message: 'Not authenticated'
       }
     }
-    
-    const user = event.context.user
-    // console.log('✅ User from context:', user.phone)
-    
+
     return {
       success: true,
-      user
+      user: {
+        id: user.id,
+        phone: user.phone,
+        name: user.name,
+        email: user.email,
+        createdAt: user.createdAt
+      }
     }
+
+  } catch (err) {
+    console.error('Error in user check:', err)
     
-  } catch (err: any) {
-    // console.error('Error in /api/users GET:', err)
-    
-    if (err.statusCode) {
-      throw err
+    return {
+      success: false,
+      user: null,
+      message: 'Authentication check failed'
     }
-    
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal server error'
-    })
   }
 })

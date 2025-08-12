@@ -24,6 +24,7 @@ export interface AuthState {
   user: PublicUser | null
   isAuthenticated: boolean
   isLoading: boolean
+  isInitialized: boolean
 }
 
 export interface LoginCredentials {
@@ -32,6 +33,6 @@ export interface LoginCredentials {
 }
 
 export interface AuthResponse {
-  user: PublicUser  // ← Клиенту возвращаем PublicUser
+  user: PublicUser 
   token: string
 }

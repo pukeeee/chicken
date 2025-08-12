@@ -2,11 +2,6 @@
 import authUser from '~/middleware/auth.user'
 import { formatDate } from '~/utils/formatters'
 
-// Защищаем страницу middleware
-definePageMeta({
-  middleware: authUser
-})
-
 // Получаем данные пользователя из композабла
 const { user, isAuthenticated, isLoading, updateUser, logout } = useAuth()
 
