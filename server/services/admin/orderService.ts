@@ -1,6 +1,6 @@
-import { getAllOrders, updateOrder } from "~/server/repositories/admin/order.repository";
-import type { OrderUpdateData, OrderFilters } from "~/app/types/order";
-import { OrderStatus } from "~/app/constants/orderConstants";
+import { getAllOrders, updateOrder } from "~~/server/repositories/admin/order.repository";
+import type { OrderUpdateData, OrderFilters } from "~~/shared/types/order";
+import { OrderStatus } from "~~/shared/constants/orderConstants";
 
 // Сервис для получения всех заказов
 export async function fetchAllOrders(filters?: OrderFilters) {

@@ -1,4 +1,4 @@
-import { checkDatabaseHealth } from '~/server/database/health'
+import { checkDatabaseHealth } from '~~/server/database/health'
 
 /**
  * @summary API-эндпоинт для проверки здоровья базы данных.

@@ -1,3 +1,5 @@
+import { useAuthStore } from "~/stores/auth"
+
 export default defineNuxtRouteMiddleware(async (to) => {
   // Проверяем только пользовательские роуты
   if (!to.path.startsWith('/users')) return

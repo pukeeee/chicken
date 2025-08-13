@@ -1,5 +1,5 @@
-import type { OrdersResponse } from '~/app/types/order'
-import type { Category } from '~/app/types/types'
+import type { OrdersResponse } from '~~/shared/types/order'
+import type { Category } from '~~/shared/types/types'
 
 /**
  * Описывает стандартную структуру ответа от нашего API.

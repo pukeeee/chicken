@@ -1,4 +1,4 @@
-import prisma from '../database/client'
+import prisma from '~~/server/database/client'
 
 // Получить все продукты
 export async function getAllProducts() {

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { formatDate } from '~/app/utils/formatters'
-import { ORDER_STATUS_CONFIG, OrderStatus } from '~/app/constants/orderConstants'
-import type { Order } from '~/app/types/order'
-import authUser from '~/app/middleware/auth.user'
+import { formatDate } from '~/utils/formatters'
+import { ORDER_STATUS_CONFIG, OrderStatus } from '~~/shared/constants/orderConstants'
+import type { Order } from '~~/shared/types/order'
+import authUser from '~/middleware/auth.user'
 
 // Защищаем страницу middleware
 definePageMeta({

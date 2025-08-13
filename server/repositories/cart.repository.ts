@@ -1,5 +1,5 @@
-import { StorageService } from '../services/storageService'
-import type { CartItem } from '~/app/types/cart'
+import { StorageService } from '~~/server/services/storageService'
+import type { CartItem } from '~~/shared/types/cart'
 
 const CART_STORAGE_KEY = 'cart'
 

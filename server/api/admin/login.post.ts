@@ -1,4 +1,4 @@
-import {adminLogin} from '../../services/adminService'
+import {adminLogin} from '~~/server/services/adminService'
 
 export default defineEventHandler(async (event) => {
     const {email, password} = await readBody(event)

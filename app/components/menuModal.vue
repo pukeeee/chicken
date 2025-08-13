@@ -50,7 +50,7 @@ watch(
       <!-- Картинка -->
       <img
         v-if="menuItem"
-        class="w-40 h-60 object-cover object-top rounded-xl border border-amber-200 shadow md:w-40 md:h-60 w-full max-w-xs"
+        class="w-40 h-60 object-cover object-top rounded-xl border border-amber-200 shadow md:w-40 md:h-60 max-w-xs"
         :src="menuItem.image"
         :alt="menuItem.name"
       />

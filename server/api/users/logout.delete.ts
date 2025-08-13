@@ -1,4 +1,4 @@
-import { removeToken } from '../../repositories/user.repository'
+import { removeToken } from '~~/server/repositories/user.repository'
 
 export default defineEventHandler(async (event) => {
   try {

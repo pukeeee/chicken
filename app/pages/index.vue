@@ -2,7 +2,7 @@
 import { ref, onMounted, computed, shallowRef } from 'vue'
 import type { TabsItem } from '@nuxt/ui'
 import { useRoute, useRouter } from 'vue-router'
-import type { Product, Category } from '../types/types'
+import type { Product, Category } from '~~/shared/types/types'
 
 // Meta для страницы
 useHead({
@@ -57,7 +57,7 @@ onMounted(async () => {
     />
     <Menu
       v-if="categories[selectedTab]"
-      :items="categories[selectedTab].products"
+      :items="categories[selectedTab]?.products || []"
       @open="openModal"
     />
     <MenuModal v-if="showModal" :id="modalId" @close="closeModal" />

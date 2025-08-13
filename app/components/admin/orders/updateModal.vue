@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { Order, OrderUpdateData } from '~/app/types/order'
-import { formatDate } from '~/app/utils/formatters'
-import { getStatusIcon, getStatusColor, getStatusLabel, getPaymentIcon } from '~/app/utils/orderHelper'
-import { useOrderForm } from '~/app/composables/useOrderForm'
+import type { Order, OrderUpdateData } from '~~/shared/types/order'
+import { formatDate } from '~/utils/formatters'
+import { getStatusIcon, getStatusColor, getStatusLabel, getPaymentIcon } from '~/utils/orderHelper'
+import { useOrderForm } from '~/composables/useOrderForm'
 
 interface Props {
     order: Order

@@ -1,5 +1,5 @@
-import { verifyToken } from '../utils/jwt'
-import { getUserById } from '../repositories/user.repository'
+import { verifyToken } from '~~/server/utils/jwt'
+import { getUserById } from '~~/server/repositories/user.repository'
 import jwt from 'jsonwebtoken'
 
 // Кэш пользователей для избежания повторных запросов к БД

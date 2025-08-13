@@ -1,6 +1,6 @@
-import { getUserByEmail, setToken } from '../repositories/user.repository'
-import { compare } from '../../server/utils/bcrypt'
-import { createToken } from '../utils/jwt'
+import { getUserByEmail, setToken } from '~~/server/repositories/user.repository'
+import { compare } from '~~/server/utils/bcrypt'
+import { createToken } from '~~/server/utils/jwt'
 
 export const adminLogin = async (email: string, password: string) => {
     const admin = await getUserByEmail(email)

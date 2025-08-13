@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Order, OrderUpdateData } from '~/app/types/order'
+import type { Order, OrderUpdateData } from '~~/shared/types/order'
 import TableRow from './tableRow.vue'
 
 interface Props {

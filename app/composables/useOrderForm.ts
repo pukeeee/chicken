@@ -1,6 +1,6 @@
-import type { Order, OrderUpdateData } from '~/app/types/order'
-import { createStatusOptions, createPaymentOptions } from '~/app/utils/orderHelper'
-import { validateOrderForm, normalizePhone } from '~/app/utils/orderValidation'
+import type { Order, OrderUpdateData } from '~~/shared/types/order'
+import { createStatusOptions, createPaymentOptions } from '~/utils/orderHelper'
+import { validateOrderForm, normalizePhone } from '~/utils/orderValidation'
 
 export interface UseOrderFormReturn {
   formData: Ref<OrderUpdateData & { status: string, paymentMethod: string }>

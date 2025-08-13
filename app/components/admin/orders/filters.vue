@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { StatusDropdownItem } from '~/app/types/order'
+import type { StatusDropdownItem } from '~~/shared/types/order'
 
 interface Props {
   searchQuery: string

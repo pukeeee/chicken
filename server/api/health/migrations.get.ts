@@ -1,4 +1,4 @@
-import { checkMigrations } from '~/server/database/migrations'
+import { checkMigrations } from '~~/server/database/migrations'
 
 /**
  * @summary API-эндпоинт для проверки статуса миграций базы данных.

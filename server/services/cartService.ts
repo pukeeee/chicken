@@ -1,4 +1,4 @@
-import type { CartItem } from '~/app/types/cart'
+import type { CartItem } from '~~/shared/types/cart'
 
 export class CartService {
   static addToCart(

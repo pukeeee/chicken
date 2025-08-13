@@ -1,4 +1,4 @@
-import { fetchProductById } from '../../services/menuService'
+import { fetchProductById } from '~~/server/services/menuService'
 
 export default defineEventHandler(async (event) => {
   const id = Number(event.context.params?.id)

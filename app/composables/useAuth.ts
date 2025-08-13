@@ -1,3 +1,5 @@
+import { useAuthStore } from '~/stores/auth'
+
 /**
  * Composable для работы с авторизацией через Pinia store
  * Предоставляет удобный интерфейс для компонентов

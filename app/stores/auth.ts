@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { User, AuthState, PublicUser } from '~/app/types/auth'
+import type { User, AuthState, PublicUser } from '~~/shared/types/auth'
 
 interface AuthActions {
   isPhoneValid(phone: string): boolean;
@@ -95,11 +95,13 @@ export const useAuthStore = defineStore<string, AuthState, any, AuthActions>('au
           this.isAuthenticated = true
         } else {
           this.clearAuth()
+          userToken.value = null
         }
         
       } catch (error: any) {
         console.error('Auth check failed, clearing session:', error.message)
         this.clearAuth() // Очищаем cookie, если токен невалидный
+        userToken.value = null
       } finally {
         this.isLoading = false
         this.isInitialized = true
@@ -205,7 +207,10 @@ export const useAuthStore = defineStore<string, AuthState, any, AuthActions>('au
     // --- Выход ---
     async logout(): Promise<void> {
       await $fetch('/api/users/logout', { method: 'DELETE' })
-      this.clearAuth() // Очищаем состояние и cookie
+      this.clearAuth() // Очищаем состояние
+
+      const userToken = useCookie('user_token')
+      userToken.value = null
 
       const toast = useToast()
       toast.add({
@@ -270,9 +275,6 @@ export const useAuthStore = defineStore<string, AuthState, any, AuthActions>('au
     clearAuth(): void {
       this.user = null
       this.isAuthenticated = false
-      
-      const userToken = useCookie('user_token')
-      userToken.value = null
     },
 
     // --- Проверка роли (для будущего расширения) ---

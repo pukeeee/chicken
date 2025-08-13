@@ -1,4 +1,4 @@
-import prisma from '../database/client'
+import prisma from '~~/server/database/client'
 
 export async function getUserByEmail(email: string) {
   return await prisma.user.findUnique({

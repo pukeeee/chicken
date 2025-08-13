@@ -1,4 +1,4 @@
-import type { OrderUpdateData } from '~/app/types/order'
+import type { OrderUpdateData } from '~~/shared/types/order'
 
 /**
  * Валидация номера телефона

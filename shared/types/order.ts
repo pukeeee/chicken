@@ -1,15 +1,10 @@
-export interface User {
+import type { Product } from './types'
+
+export interface OrderCustomer {
   id: number
   name?: string
   email?: string
   phone?: string
-}
-
-export interface Product {
-  id: number
-  name: string
-  price: number
-  image?: string
 }
 
 export interface OrderItem {
@@ -32,7 +27,7 @@ export interface Order {
   createdAt: string
   updatedAt?: string
   items: OrderItem[]
-  user?: User
+  user?: OrderCustomer
 }
 
 // Параметры запроса для фильтрации заказов

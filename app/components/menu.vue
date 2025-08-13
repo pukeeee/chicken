@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useCart } from '~/app/composables/useCart';
-import type { MenuItem } from '~/app/types/types'
+import { useCart } from '~/composables/useCart';
+import type { MenuItem } from '~~/shared/types/types'
 
 const props = defineProps<{
   items: MenuItem[]

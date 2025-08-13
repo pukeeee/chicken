@@ -1,6 +1,6 @@
 // composables/useOrders.ts
 import { useDebounceFn } from '@vueuse/core'
-import { ORDER_STATUS_CONFIG } from '~/app/constants/orderConstants'
+import { ORDER_STATUS_CONFIG } from '~~/shared/constants/orderConstants'
 import type { 
     Order, 
     OrderStats, 
@@ -9,7 +9,7 @@ import type {
     OrderStatusConfig,
     UseOrdersReturn, 
     OrderUpdateData
-} from '~/app/types/order'
+} from '~~/shared/types/order'
 
 export const useOrders = (): UseOrdersReturn => {
     // Реактивные состояния
