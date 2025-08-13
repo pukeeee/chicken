@@ -1,4 +1,4 @@
-import type { User } from "~/types/auth"
+import type { User } from "~/app/types/auth"
 import { setToken } from "~/server/repositories/user.repository"
 import { getUserByPhone, createUser } from "~/server/repositories/user.repository"
 

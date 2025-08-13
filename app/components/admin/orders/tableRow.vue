@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Order, OrderUpdateData } from '~/types/order'
-import { formatDate, formatPrice } from '~/utils/formatters'
+import type { Order, OrderUpdateData } from '~/app/types/order'
+import { formatDate, formatPrice } from '~/app/utils/formatters'
 import { 
   OrderStatus, 
   ORDER_STATUS_CONFIG, 
   PaymentMethod, 
   PAYMENT_METHOD_CONFIG
-} from '~/constants/orderConstants'
+} from '~/app/constants/orderConstants'
 
 interface Props {
   order: Order

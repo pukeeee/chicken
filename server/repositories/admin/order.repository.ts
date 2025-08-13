@@ -1,5 +1,5 @@
 import prisma from '~/server/database/client'
-import type { OrderUpdateData, OrderFilters } from '~/types/order'
+import type { OrderUpdateData, OrderFilters } from '~/app/types/order'
 
 export async function getAllOrders(filters?: OrderFilters) {
     const {status, search, page = 1, limit = 5} = filters || {}

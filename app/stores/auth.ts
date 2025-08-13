@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { User, AuthState, PublicUser } from '~/types/auth'
+import type { User, AuthState, PublicUser } from '~/app/types/auth'
 
 interface AuthActions {
   isPhoneValid(phone: string): boolean;

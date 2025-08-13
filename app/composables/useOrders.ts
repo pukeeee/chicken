@@ -1,6 +1,6 @@
 // composables/useOrders.ts
 import { useDebounceFn } from '@vueuse/core'
-import { ORDER_STATUS_CONFIG } from '~/constants/orderConstants'
+import { ORDER_STATUS_CONFIG } from '~/app/constants/orderConstants'
 import type { 
     Order, 
     OrderStats, 
@@ -9,7 +9,7 @@ import type {
     OrderStatusConfig,
     UseOrdersReturn, 
     OrderUpdateData
-} from '~/types/order'
+} from '~/app/types/order'
 
 export const useOrders = (): UseOrdersReturn => {
     // Реактивные состояния
@@ -68,6 +68,7 @@ export const useOrders = (): UseOrdersReturn => {
     
     // Запрос данных
     const { data: ordersData, pending: loading, error, refresh } = useFetch<OrdersResponse>('/api/admin/orders', {
+        deep: true,
         query: computed(() => ({
         status: selectedStatus.value || undefined,
         search: searchQuery.value || undefined,

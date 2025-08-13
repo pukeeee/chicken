@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { OrderStats } from '~/types/order'
+import type { OrderStats } from '~/app/types/order'
 
 interface Props {
   orderStats: OrderStats | null

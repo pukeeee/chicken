@@ -1,5 +1,5 @@
-import type { OrdersResponse } from '~/types/order'
-import type { Category } from '~/types/types'
+import type { OrdersResponse } from '~/app/types/order'
+import type { Category } from '~/app/types/types'
 
 /**
  * Описывает стандартную структуру ответа от нашего API.
@@ -25,6 +25,7 @@ export const useApiCache = () => {
     menu: () => useFetch<ApiResponse<Category[]>>('/api/menu', {
       key: 'menu', // Уникальный ключ для кэша `useFetch`
       server: true,
+      deep: true, // Добавлено для сохранения глубокой реактивности
       transform: (response: any) => response?.data || [],
     }),
 
@@ -38,6 +39,7 @@ export const useApiCache = () => {
       key: `orders:${JSON.stringify(filters)}`,
       query: filters,
       server: false,
+      deep: true, // Добавлено для сохранения глубокой реактивности
       default: () => ({ orders: [], total: 0, page: 1, limit: 10, orderStats: {} as any }),
     }),
   }

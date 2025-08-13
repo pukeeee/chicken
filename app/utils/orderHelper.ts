@@ -1,4 +1,4 @@
-import { ORDER_STATUS_CONFIG, PAYMENT_METHOD_CONFIG } from '~/constants/orderConstants'
+import { ORDER_STATUS_CONFIG, PAYMENT_METHOD_CONFIG } from '~/app/constants/orderConstants'
 
 /**
  * Получение иконки статуса

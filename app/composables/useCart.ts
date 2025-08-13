@@ -1,4 +1,4 @@
-import { useCartStore } from '~/stores/cart'
+import { useCartStore } from '~/app/stores/cart'
 
 export const useCart = () => {
   const cartStore = useCartStore()

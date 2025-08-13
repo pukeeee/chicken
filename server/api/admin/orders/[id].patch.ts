@@ -1,5 +1,5 @@
 import { updateOrderService } from '~/server/services/admin/orderService';
-import type { OrderUpdateData } from '~/types/order';
+import type { OrderUpdateData } from '~/app/types/order';
 import { cacheKeys } from '~/server/utils/cacheKeys'
 import { cache } from '~/server/utils/cache'
 

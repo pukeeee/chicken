@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import authUser from '~/middleware/auth.user'
-import { formatDate } from '~/utils/formatters'
+import authUser from '~/app/middleware/auth.user'
+import { formatDate } from '~/app/utils/formatters'
 
 // Получаем данные пользователя из композабла
 const { user, isAuthenticated, isLoading, updateUser, logout } = useAuth()

@@ -1,5 +1,5 @@
 import { getUserById } from '../../repositories/user.repository'
-import type { User, PublicUser } from '~/types/auth'
+import type { User, PublicUser } from '~/app/types/auth'
 import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'

@@ -1,6 +1,6 @@
 <script setup>
-import { ORDER_STATUS_CONFIG, PAYMENT_METHOD_CONFIG } from '~/constants/orderConstants'
-import { useOrders } from '~/composables/useOrders'
+import { ORDER_STATUS_CONFIG, PAYMENT_METHOD_CONFIG } from '~/app/constants/orderConstants'
+import { useOrders } from '~/app/composables/useOrders'
 
 definePageMeta({
   layout: 'admin'
