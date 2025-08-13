@@ -1,5 +1,5 @@
-import { getAllProducts, getProductById, getAllCategoriesWithProducts } from '../repositories/menu.repository'
-import { withCache } from '../utils/cache'
+import { getAllProducts, getProductById, getAllCategoriesWithProducts } from '~~/server/repositories/menu.repository'
+import { withCache } from '~~/server/utils/cache'
 
 // Сервис для получения всех продуктов
 export async function fetchAllProducts() {

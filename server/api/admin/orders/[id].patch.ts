@@ -1,14 +1,23 @@
-import { updateOrderService } from '~/server/services/admin/orderService';
-import type { OrderUpdateData } from '~/types/order';
-import { cacheKeys } from '~/server/utils/cacheKeys'
-import { cache } from '~/server/utils/cache'
+import { updateOrderService } from '~~/server/services/admin/orderService';
+import type { OrderUpdateData } from '~~/shared/types/order';
+import { cacheKeys } from '~~/server/utils/cacheKeys'
+import { cache } from '~~/server/utils/cache'
 
 export default defineEventHandler(async (event) => {
   try {
     // Получаем ID из параметров
-    const orderId = parseInt(getRouterParam(event, 'id') || '0');
+    const orderIdString = getRouterParam(event, 'id');
   
-  if (!orderId || isNaN(orderId)) {
+  if (!orderIdString) {
+    throw createError({ 
+    statusCode: 400,
+    statusMessage: 'ID заказа не предоставлен'
+    });
+  }
+
+  const orderId = parseInt(orderIdString, 10);
+
+  if (isNaN(orderId)) {
     throw createError({ 
     statusCode: 400,
     statusMessage: 'Неверный ID заказа'
@@ -21,12 +30,12 @@ export default defineEventHandler(async (event) => {
   const updatedOrder = await updateOrderService(orderId, updateData);
 
   // Очищаем связанные кэши
-  cache.delete(cacheKeys.orders.all())
-  cache.delete(cacheKeys.orders.byId(orderId))
+  cache.delete(cacheKeys.orders.all());
+  cache.delete(cacheKeys.orders.byId(String(orderId)));
 
   return {
     success: true,
-    data: updatedOrder
+    order: updatedOrder
   };
   
   } 

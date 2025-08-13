@@ -1,4 +1,4 @@
-import { otpService } from "~/server/utils/otp"
+import { otpService } from "~~/server/utils/otp"
 
 export const codeService = {
 

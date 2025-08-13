@@ -1,4 +1,4 @@
-import { fetchAllCategoriesWithProducts } from '../../services/menuService'
+import { fetchAllCategoriesWithProducts } from '~~/server/services/menuService'
 
 export default defineEventHandler(async (event) => {
   const categories = await fetchAllCategoriesWithProducts()

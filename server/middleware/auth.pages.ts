@@ -1,5 +1,5 @@
-import { verifyToken } from '../utils/jwt'
-import { getUserById } from '../repositories/user.repository'
+import { verifyToken } from '~~/server/utils/jwt'
+import { getUserById } from '~~/server/repositories/user.repository'
 
 export default defineEventHandler(async (event) => {
   const url = event.node.req.url || ''

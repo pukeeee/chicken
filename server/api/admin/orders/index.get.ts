@@ -1,4 +1,4 @@
-import { fetchAllOrders } from "~/server/services/admin/orderService"
+import { fetchAllOrders } from "~~/server/services/admin/orderService"
 
 export default defineEventHandler(async (event) => {
     try {

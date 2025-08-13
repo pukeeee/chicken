@@ -1,6 +1,6 @@
 export class StorageService {
   private static isClient(): boolean {
-    return !!process.client
+    return !! import.meta.client
   }
 
   static getItem<T>(key: string): T | null {

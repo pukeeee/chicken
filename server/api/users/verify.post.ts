@@ -1,4 +1,4 @@
-import { codeService } from '~/server/services/users/codeService'
+import { codeService } from '~~/server/services/users/codeService'
 
 export default defineEventHandler(async (event) => {
   try {
