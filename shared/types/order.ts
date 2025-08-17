@@ -2,32 +2,32 @@ import type { Product } from './types'
 
 export interface OrderCustomer {
   id: number
-  name?: string
-  email?: string
-  phone?: string
+  name?: string | null
+  email?: string | null
+  phone?: string | null
 }
 
 export interface OrderItem {
   id: number
   quantity: number
   price: number
-  image?: string
+  image?: string | null
   product: Product
 }
 
 export interface Order {
   id: number
   status: string
-  customerName?: string
-  customerPhone?: string
-  customerEmail?: string
-  deliveryAddress?: string
+  customerName?: string | null
+  customerPhone?: string | null
+  customerEmail?: string | null
+  deliveryAddress?: string | null
   total: number
   paymentMethod: string
   createdAt: string
-  updatedAt?: string
+  updatedAt?: string | null
   items: OrderItem[]
-  user?: OrderCustomer
+  user?: OrderCustomer | null
 }
 
 // Параметры запроса для фильтрации заказов
@@ -41,10 +41,10 @@ export interface OrderFilters {
 export interface OrderUpdateData {
   userId?: number
   status?: string
-  customerName?: string
-  customerPhone?: string
-  customerEmail?: string
-  deliveryAddress?: string
+  customerName?: string | null
+  customerPhone?: string | null
+  customerEmail?: string | null
+  deliveryAddress?: string | null
   total?: number
   paymentMethod?: string
 }

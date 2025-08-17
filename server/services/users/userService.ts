@@ -1,6 +1,7 @@
-import { getUserById } from '~~/server/repositories/user.repository'
+import { getUserById, getUsersOrderByUserId } from '~~/server/repositories/user.repository'
 import type { User, PublicUser } from '~~/shared/types/auth'
 import jwt from 'jsonwebtoken'
+import { Order } from '~~/shared/types/order'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
@@ -49,4 +50,23 @@ export const toPublicUser = (user: User): PublicUser => {
     email: user.email,
     createdAt: user.createdAt.toISOString()
   }
+}
+
+export const fetchUsersOrders = async (userId: number): Promise<Order[]> => {
+  const orders = await getUsersOrderByUserId(userId)
+
+  // Prisma returns Date objects, but our shared Order type expects strings.
+  // We need to manually serialize the dates to strings.
+  return orders.map(order => ({
+    ...order,
+    createdAt: order.createdAt.toISOString(),
+    // updatedAt: order.updatedAt?.toISOString() || null,
+    items: order.items.map(item => ({
+      ...item,
+      product: {
+        ...item.product,
+        createdAt: item.product.createdAt.toISOString(),
+      }
+    }))
+  }))
 }

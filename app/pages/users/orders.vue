@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { formatDate } from '~/utils/formatters'
 import { ORDER_STATUS_CONFIG, OrderStatus } from '~~/shared/constants/orderConstants'
-import type { Order } from '~~/shared/types/order'
 import authUser from '~/middleware/auth.user'
 
 // Защищаем страницу middleware
@@ -12,12 +11,13 @@ definePageMeta({
 // Получаем данные пользователя из композабла
 const { user, logout } = useAuth()
 
-// Моковые данные заказов (в будущем будут загружаться с сервера)
-const orders = ref<Order[]>([
-  // Пока пустой массив, в будущем здесь будут реальные заказы
-])
+// Используем новый композабл для получения заказов
+const { orders, isLoading, error, fetchOrders } = useUserOrders()
 
-const isLoading = ref(false)
+// Загружаем заказы при монтировании компонента
+onMounted(() => {
+  fetchOrders()
+})
 
 // Выход из системы
 const handleLogout = async () => {
@@ -110,12 +110,24 @@ const getStatusConfig = (status: string) => {
 
         <!-- Основной контент -->
         <div class="lg:col-span-2">
+          <!-- Индикатор загрузки -->
+          <div v-if="isLoading" class="text-center py-10">
+            <UIcon name="i-lucide-loader" class="animate-spin text-4xl text-amber-500" />
+            <p class="mt-2 text-gray-600">Завантаження замовлень...</p>
+          </div>
+
+          <!-- Сообщение об ошибке -->
+          <div v-else-if="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <p class="font-bold">Помилка завантаження</p>
+            <p>Не вдалося завантажити ваші замовлення. Спробуйте оновити сторінку.</p>
+          </div>
+
           <!-- Если заказов нет -->
-          <div v-if="orders.length === 0 && !isLoading" class="bg-white rounded-lg shadow p-8 text-center">
-            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <UIcon name="i-lucide-shopping-bag" class="w-8 h-8 text-gray-400" />
+          <div v-else-if="orders.length === 0" class="bg-white rounded-lg shadow p-8 text-center">
+            <div class="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <UIcon name="i-lucide-shopping-bag" class="w-10 h-10 text-gray-400" />
             </div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">
               У вас поки немає замовлень
             </h3>
             <p class="text-gray-600 mb-6">
@@ -131,86 +143,89 @@ const getStatusConfig = (status: string) => {
             </UButton>
           </div>
 
-          <!-- Список заказов (когда они будут) -->
-          <div v-else class="space-y-6">
+          <!-- Список заказов -->
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             <div 
               v-for="order in orders" 
               :key="order.id"
-              class="bg-white rounded-lg shadow overflow-hidden"
+              class="bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-all duration-200 hover:shadow-lg"
             >
               <!-- Заголовок заказа -->
-              <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <div>
-                  <h3 class="text-lg font-semibold text-gray-900">
+              <div class="p-4 border-b border-gray-50">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="font-semibold text-gray-900 text-sm">
                     Замовлення #{{ order.id }}
                   </h3>
-                  <p class="text-sm text-gray-500">
-                    {{ formatDate(order.createdAt) }}
-                  </p>
+                  <UBadge 
+                    :color="getStatusConfig(order.status).color"
+                    variant="soft"
+                    size="sm"
+                  >
+                    {{ getStatusConfig(order.status).label }}
+                  </UBadge>
                 </div>
-                <UBadge 
-                  :color="getStatusConfig(order.status).color"
-                  variant="soft"
-                  size="lg"
-                >
-                  {{ getStatusConfig(order.status).label }}
-                </UBadge>
+                <p class="text-xs text-gray-500">
+                  {{ formatDate(order.createdAt) }}
+                </p>
               </div>
 
               <!-- Содержимое заказа -->
-              <div class="px-6 py-4">
-                <div class="space-y-3">
+              <div class="p-4">
+                <!-- Товары -->
+                <div class="space-y-2 mb-4">
                   <div 
                     v-for="item in order.items" 
                     :key="item.id"
-                    class="flex items-center justify-between"
+                    class="flex items-center justify-between text-sm"
                   >
-                    <div class="flex items-center space-x-3">
-                      <img 
+                    <div class="flex items-center space-x-2 flex-1 min-w-0">
+                      <!-- <img 
                         :src="item.image || '/images/placeholder-food.jpg'" 
                         :alt="item.product.name"
-                        class="w-12 h-12 rounded-lg object-cover"
-                      />
-                      <div>
-                        <p class="font-medium text-gray-900">{{ item.product.name }}</p>
-                        <p class="text-sm text-gray-500">Кількість: {{ item.quantity }}</p>
+                        class="w-8 h-8 rounded-md object-cover flex-shrink-0"
+                      /> -->
+                      <div class="min-w-0 flex-1">
+                        <p class="font-medium text-gray-900 truncate">{{ item.product.name }}</p>
+                        <p class="text-xs text-gray-500">× {{ item.quantity }}</p>
                       </div>
                     </div>
-                    <p class="font-semibold text-gray-900">
+                    <p class="font-semibold text-gray-900 text-sm ml-2">
                       {{ item.price * item.quantity }} ₴
                     </p>
                   </div>
                 </div>
 
                 <!-- Итого -->
-                <div class="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
-                  <span class="text-lg font-semibold text-gray-900">Загалом:</span>
-                  <span class="text-xl font-bold text-amber-600">{{ order.total }} ₴</span>
+                <div class="flex justify-between items-center pt-3 border-t border-gray-50 mb-4">
+                  <span class="font-semibold text-gray-900">Загалом:</span>
+                  <span class="text-lg font-bold text-amber-600">{{ order.total }} ₴</span>
                 </div>
 
                 <!-- Адрес доставки -->
-                <div v-if="order.deliveryAddress" class="mt-4 pt-4 border-t border-gray-200">
-                  <p class="text-sm font-medium text-gray-700 mb-1">Адреса доставки:</p>
-                  <p class="text-gray-900">{{ order.deliveryAddress }}</p>
+                <div v-if="order.deliveryAddress" class="mb-4">
+                  <p class="text-xs font-medium text-gray-700 mb-1">Адреса:</p>
+                  <p class="text-xs text-gray-600 line-clamp-2">{{ order.deliveryAddress }}</p>
                 </div>
-              </div>
 
-              <!-- Действия -->
-              <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
-                <UButton 
-                  variant="outline" 
-                  size="sm"
-                  icon="i-lucide-repeat"
-                >
-                  Повторити замовлення
-                </UButton>
-                <UButton 
-                  variant="outline" 
-                  size="sm"
-                  icon="i-lucide-phone"
-                >
-                  Зв'язатися з рестораном
-                </UButton>
+                <!-- Действия -->
+                <div class="flex space-x-2">
+                  <UButton 
+                    variant="outline" 
+                    size="xs"
+                    icon="i-lucide-repeat"
+                    class="flex-1"
+                  >
+                    Повторити
+                  </UButton>
+                  <UButton 
+                    variant="outline" 
+                    size="xs"
+                    icon="i-lucide-phone"
+                    class="flex-1"
+                  >
+                    Зв'язок
+                  </UButton>
+                </div>
               </div>
             </div>
           </div>

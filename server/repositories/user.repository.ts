@@ -46,3 +46,18 @@ export async function updateUserById(id: number, data: { name?: string | null; e
     data
   })
 }
+
+export async function getUsersOrderByUserId(userId: number) {
+  return await prisma.order.findMany({
+    where: {userId: userId},
+    orderBy: {createdAt: 'desc'},
+    include: {
+      items: {
+        include: {
+          product: true
+        }
+      }
+
+    }
+  })
+}
