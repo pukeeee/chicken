@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import type { AuthState, PublicUser } from '~~/shared/types/auth'
+import { toastService } from '../services/toastService'
 
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
@@ -99,12 +100,12 @@ export const useAuthStore = defineStore('auth', {
           body: { phone }
         });
         
-        this.showToast('success', 'Код підтвердження надіслано', `Код надіслано на номер ${phone}`);
+        toastService.verificationCodeSent(phone);
         return { success: true };
         
       } catch (error: any) {
         // console.error('Error sending verification code:', error);
-        this.showToast('error', 'Помилка', 'Не вдалося надіслати код підтвердження');
+        toastService.verificationCodeError();
         return { success: false };
       } finally {
         this.isLoading = false;
@@ -127,12 +128,12 @@ export const useAuthStore = defineStore('auth', {
         this.user = response.user;
         this.isAuthenticated = true;
 
-        this.showToast('success', 'Успішно!', 'Ви ввійшли у свій акаунт');
+        toastService.loginSuccess();
         return { success: true, user: response.user };
         
       } catch (error: any) {
         // console.error('Error verifying code:', error);
-        this.showToast('error', 'Помилка', 'Невірний код підтвердження');
+        toastService.loginError();
         return { success: false };
       } finally {
         this.isLoading = false;
@@ -150,7 +151,7 @@ export const useAuthStore = defineStore('auth', {
       }
       
       this.clearAuth();
-      this.showToast('info', 'Ви вийшли', 'Ви успішно вийшли зі свого акаунту');
+      toastService.logoutSuccess();
       await navigateTo('/');
     },
 
@@ -159,7 +160,7 @@ export const useAuthStore = defineStore('auth', {
      */
     async updateUser(userData: Partial<PublicUser>): Promise<PublicUser | null> {
       if (!this.user) {
-        this.showToast('error', 'Помилка', 'Користувач не авторизований');
+        toastService.unauthorizedError();
         return null;
       }
       
@@ -175,12 +176,12 @@ export const useAuthStore = defineStore('auth', {
         });
         
         this.user = response.user;
-        this.showToast('success', 'Збережено', 'Ваші дані успішно оновлено');
+        toastService.profileUpdateSuccess();
         return response.user;
         
       } catch (error: any) {
         // console.error('Error updating user:', error);
-        this.showToast('error', 'Помилка', 'Не вдалося оновити дані користувача');
+        toastService.profileUpdateError();
         return null;
       } finally {
         this.isLoading = false;
@@ -215,13 +216,5 @@ export const useAuthStore = defineStore('auth', {
       // Можно добавить при необходимости
       return false;
     },
-
-    /**
-     * Вспомогательный метод для показа уведомлений
-     */
-    showToast(color: 'success' | 'error' | 'info' | 'warning', title: string, description?: string): void {
-      const toast = useToast();
-      toast.add({ title, description, color });
-    }
   },
 })
