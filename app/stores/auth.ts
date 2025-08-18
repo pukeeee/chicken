@@ -22,53 +22,68 @@ export const useAuthStore = defineStore('auth', {
      * Проверяет наличие валидного токена и загружает данные пользователя
      */
     async initialize(): Promise<void> {
-      if (this.isInitialized) return
+      // DEBUG: Начало инициализации
+      // console.log('[Auth] Initializing...');
+      
+      if (this.isInitialized) {
+        // console.log('[Auth] Already initialized.');
+        return;
+      }
 
-      const userToken = useCookie('user_token')
+      const userToken = useCookie('user_token');
+      // console.log(`[Auth] Token found: ${!!userToken.value}`);
       
       if (!userToken.value) {
-        this.isAuthenticated = false
-        this.user = null
-        this.isInitialized = true
-        return
+        this.isAuthenticated = false;
+        this.user = null;
+        this.isInitialized = true;
+        // console.log('[Auth] No token. Initialization complete.');
+        return;
       }
 
       // Если токен есть, но пользователь уже авторизован, не делаем лишний запрос
       if (this.isAuthenticated && this.user) {
-        this.isInitialized = true
-        return
+        this.isInitialized = true;
+        // console.log('[Auth] Already authenticated. Initialization complete.');
+        return;
       }
 
-      await this.fetchUser()
+      await this.fetchUser();
+      
+      // Устанавливаем флаг инициализации только после завершения всех асинхронных операций
+      this.isInitialized = true;
+      // console.log(`[Auth] User fetch complete. Initialized. Authenticated: ${this.isAuthenticated}`);
     },
 
     /**
      * Загрузка данных пользователя с сервера
      */
     async fetchUser(): Promise<void> {
+      // console.log('[Auth] Fetching user...');
+      this.isLoading = true;
       try {
-        this.isLoading = true
-        
-        const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+        const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined;
         
         const response = await $fetch<{ success: boolean, user: PublicUser }>('/api/users/', {
           method: 'GET',
           headers,
-        })
+        });
         
         if (response.success && response.user) {
-          this.user = response.user
-          this.isAuthenticated = true
+          this.user = response.user;
+          this.isAuthenticated = true;
+          // console.log('[Auth] User fetched successfully:', response.user.name);
         } else {
-          this.clearAuth()
+          // console.log('[Auth] Fetch user responded with an error, clearing auth.');
+          this.clearAuth();
         }
         
       } catch (error: any) {
-        console.error('Auth check failed:', error.message)
-        this.clearAuth()
+        // console.error('[Auth] Auth check failed:', error.message);
+        this.clearAuth();
       } finally {
-        this.isLoading = false
-        this.isInitialized = true
+        this.isLoading = false;
+        // Флаг isInitialized теперь устанавливается в action `initialize`
       }
     },
 
@@ -77,22 +92,22 @@ export const useAuthStore = defineStore('auth', {
      */
     async sendVerificationCode(phone: string): Promise<{ success: boolean }> {
       try {
-        this.isLoading = true
+        this.isLoading = true;
         
         await $fetch('/api/users/verify', {
           method: 'POST',
           body: { phone }
-        })
+        });
         
-        this.showToast('success', 'Код підтвердження надіслано', `Код надіслано на номер ${phone}`)
-        return { success: true }
+        this.showToast('success', 'Код підтвердження надіслано', `Код надіслано на номер ${phone}`);
+        return { success: true };
         
       } catch (error: any) {
-        console.error('Error sending verification code:', error)
-        this.showToast('error', 'Помилка', 'Не вдалося надіслати код підтвердження')
-        return { success: false }
+        // console.error('Error sending verification code:', error);
+        this.showToast('error', 'Помилка', 'Не вдалося надіслати код підтвердження');
+        return { success: false };
       } finally {
-        this.isLoading = false
+        this.isLoading = false;
       }
     },
 
@@ -101,26 +116,26 @@ export const useAuthStore = defineStore('auth', {
      */
     async verifyCodeAndLogin(phone: string, code: string): Promise<{ success: boolean; user?: PublicUser }> {
       try {
-        this.isLoading = true
+        this.isLoading = true;
 
         const response = await $fetch<{ user: PublicUser }>('/api/users/login', {
           method: 'POST',
           body: { phone, code }
-        })
+        });
         
         // Устанавливаем состояние напрямую
-        this.user = response.user
-        this.isAuthenticated = true
+        this.user = response.user;
+        this.isAuthenticated = true;
 
-        this.showToast('success', 'Успішно!', 'Ви ввійшли у свій акаунт')
-        return { success: true, user: response.user }
+        this.showToast('success', 'Успішно!', 'Ви ввійшли у свій акаунт');
+        return { success: true, user: response.user };
         
       } catch (error: any) {
-        console.error('Error verifying code:', error)
-        this.showToast('error', 'Помилка', 'Невірний код підтвердження')
-        return { success: false }
+        // console.error('Error verifying code:', error);
+        this.showToast('error', 'Помилка', 'Невірний код підтвердження');
+        return { success: false };
       } finally {
-        this.isLoading = false
+        this.isLoading = false;
       }
     },
 
@@ -129,14 +144,14 @@ export const useAuthStore = defineStore('auth', {
      */
     async logout(): Promise<void> {
       try {
-        await $fetch('/api/users/logout', { method: 'DELETE' })
+        await $fetch('/api/users/logout', { method: 'DELETE' });
       } catch (error) {
-        console.error('Logout error:', error)
+        // console.error('Logout error:', error);
       }
       
-      this.clearAuth()
-      this.showToast('info', 'Ви вийшли', 'Ви успішно вийшли зі свого акаунту')
-      await navigateTo('/')
+      this.clearAuth();
+      this.showToast('info', 'Ви вийшли', 'Ви успішно вийшли зі свого акаунту');
+      await navigateTo('/');
     },
 
     /**
@@ -144,12 +159,12 @@ export const useAuthStore = defineStore('auth', {
      */
     async updateUser(userData: Partial<PublicUser>): Promise<PublicUser | null> {
       if (!this.user) {
-        this.showToast('error', 'Помилка', 'Користувач не авторизований')
-        return null
+        this.showToast('error', 'Помилка', 'Користувач не авторизований');
+        return null;
       }
       
       try {
-        this.isLoading = true
+        this.isLoading = true;
         
         const response = await $fetch<{ user: PublicUser }>('/api/users/', {
           method: 'PATCH',
@@ -157,18 +172,18 @@ export const useAuthStore = defineStore('auth', {
             name: userData.name,
             email: userData.email
           }
-        })
+        });
         
-        this.user = response.user
-        this.showToast('success', 'Збережено', 'Ваші дані успішно оновлено')
-        return response.user
+        this.user = response.user;
+        this.showToast('success', 'Збережено', 'Ваші дані успішно оновлено');
+        return response.user;
         
       } catch (error: any) {
-        console.error('Error updating user:', error)
-        this.showToast('error', 'Помилка', 'Не вдалося оновити дані користувача')
-        return null
+        // console.error('Error updating user:', error);
+        this.showToast('error', 'Помилка', 'Не вдалося оновити дані користувача');
+        return null;
       } finally {
-        this.isLoading = false
+        this.isLoading = false;
       }
     },
 
@@ -176,19 +191,20 @@ export const useAuthStore = defineStore('auth', {
      * Принудительная проверка авторизации
      */
     async checkAuth(): Promise<boolean> {
-      await this.fetchUser()
-      return this.isAuthenticated
+      await this.fetchUser();
+      return this.isAuthenticated;
     },
 
     /**
      * Очистка состояния авторизации
      */
     clearAuth(): void {
-      this.user = null
-      this.isAuthenticated = false
+      // console.log('[Auth] Clearing authentication state.');
+      this.user = null;
+      this.isAuthenticated = false;
       
-      const userToken = useCookie('user_token')
-      userToken.value = null
+      const userToken = useCookie('user_token');
+      userToken.value = null;
     },
 
     /**
@@ -197,15 +213,15 @@ export const useAuthStore = defineStore('auth', {
     hasRole(role: string): boolean {
       // В текущей реализации роли нет в PublicUser
       // Можно добавить при необходимости
-      return false
+      return false;
     },
 
     /**
      * Вспомогательный метод для показа уведомлений
      */
     showToast(color: 'success' | 'error' | 'info' | 'warning', title: string, description?: string): void {
-      const toast = useToast()
-      toast.add({ title, description, color })
+      const toast = useToast();
+      toast.add({ title, description, color });
     }
   },
 })
