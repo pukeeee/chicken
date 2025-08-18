@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { formatDate } from '~/utils/formatters'
 import { ORDER_STATUS_CONFIG, OrderStatus } from '~~/shared/constants/orderConstants'
-import authUser from '~/middleware/auth.user'
+import { useAuth } from '~/composables/auth/useAuth'
+import { useAuthGuard } from '~/composables/auth/useAuthGuard'
+import { useUserOrders } from '~/composables/useUserOrders'
 
-// Защищаем страницу middleware
-definePageMeta({
-  middleware: authUser
-})
+// Защищаем страницу и управляем отображением контента
+const { showPageContent, showLoadingSpinner } = useAuthGuard()
 
 // Получаем данные пользователя из композабла
 const { user, logout } = useAuth()
@@ -14,10 +14,12 @@ const { user, logout } = useAuth()
 // Используем новый композабл для получения заказов
 const { orders, isLoading, error, fetchOrders } = useUserOrders()
 
-// Загружаем заказы при монтировании компонента
-onMounted(() => {
-  fetchOrders()
-})
+// Загружаем заказы только после того, как гвард подтвердит авторизацию
+watch(showPageContent, (canShow) => {
+  if (canShow && !orders.value.length) {
+    fetchOrders()
+  }
+}, { immediate: true })
 
 // Выход из системы
 const handleLogout = async () => {
@@ -58,13 +60,13 @@ const getStatusConfig = (status: string) => {
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Заголовок страницы -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Мої замовлення</h1>
-        <p class="mt-2 text-gray-600">Переглядайте історію ваших замовлень</p>
+      <!-- Спиннер загрузки страницы -->
+      <div v-if="showLoadingSpinner" class="text-center py-20">
+        <UIcon name="i-lucide-loader" class="animate-spin text-5xl text-amber-500" />
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Основной контент страницы -->
+      <div v-else-if="showPageContent" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Боковая панель навигации -->
         <div class="lg:col-span-1">
           <div class="bg-white rounded-lg shadow p-6">
@@ -108,9 +110,15 @@ const getStatusConfig = (status: string) => {
           </div>
         </div>
 
-        <!-- Основной контент -->
+        <!-- Контент заказов -->
         <div class="lg:col-span-2">
-          <!-- Индикатор загрузки -->
+          <!-- Заголовок -->
+          <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Мої замовлення</h1>
+            <p class="mt-2 text-gray-600">Переглядайте історію ваших замовлень</p>
+          </div>
+
+          <!-- Индикатор загрузки заказов -->
           <div v-if="isLoading" class="text-center py-10">
             <UIcon name="i-lucide-loader" class="animate-spin text-4xl text-amber-500" />
             <p class="mt-2 text-gray-600">Завантаження замовлень...</p>
