@@ -1,62 +1,27 @@
 <script setup lang="ts">
-import authUser from '~/middleware/auth.user'
+import { useAuth } from '~/composables/auth/useAuth'
+import { useAuthGuard } from '~/composables/auth/useAuthGuard'
+import { useUserProfile } from '~/composables/user/useUserProfile'
 import { formatDate } from '~/utils/formatters'
 
-// Получаем данные пользователя из композабла
-const { user, isAuthenticated, isLoading, updateUser, logout } = useAuth()
+// Защита роута
+useAuthGuard()
 
-// Реактивные данные для редактирования профиля
-const isEditing = ref(false)
-const editForm = ref({
-  name: '',
-  email: '',
-  phone: ''
-})
+// Данные пользователя и выход из системы
+const { user, logout } = useAuth()
 
-// Инициализация формы данными пользователя
-watchEffect(() => {
-  if (user.value) {
-    editForm.value = {
-      name: user.value.name || '',
-      email: user.value.email || '',
-      phone: user.value.phone || ''
-    }
-  }
-})
+// Логика профиля
+const {
+  isEditing,
+  editForm,
+  validationErrors,
+  startEditing,
+  cancelEditing,
+  saveProfile,
+  isLoading,
+  hasChanges
+} = useUserProfile()
 
-// Включение режима редактирования
-const startEditing = () => {
-  isEditing.value = true
-}
-
-// Отмена редактирования
-const cancelEditing = () => {
-  isEditing.value = false
-  // Восстанавливаем исходные данные
-  if (user.value) {
-    editForm.value = {
-      name: user.value.name || '',
-      email: user.value.email || '',
-      phone: user.value.phone || ''
-    }
-  }
-}
-
-// Сохранение изменений профиля
-const saveProfile = async () => {
-  try {
-    await updateUser({
-      name: editForm.value.name,
-      email: editForm.value.email
-      // Телефон обычно не меняют через профиль
-    })
-    isEditing.value = false
-  } catch (error) {
-    console.error('Error updating profile:', error)
-  }
-}
-
-// Выход из системы
 const handleLogout = async () => {
   await logout()
 }
@@ -190,16 +155,17 @@ const handleLogout = async () => {
                 <template v-else>
                   <!-- Режим редактирования -->
                   <form @submit.prevent="saveProfile" class="space-y-6">
-                    <UFormField label="Ім'я" name="name">
+                    <UFormField label="Ім'я" name="name" :error="validationErrors.name">
                       <UInput
                         v-model="editForm.name"
                         placeholder="Введіть ваше ім'я"
+                        :disabled="isLoading"
                       />
                     </UFormField>
 
                     <UFormField label="Телефон" name="phone">
                       <UInput
-                        v-model="editForm.phone"
+                        :model-value="user.phone"
                         disabled
                         :ui="{ base: 'bg-gray-50' }"
                       />
@@ -210,11 +176,12 @@ const handleLogout = async () => {
                       </template>
                     </UFormField>
 
-                    <UFormField label="Email" name="email">
+                    <UFormField label="Email" name="email" :error="validationErrors.email">
                       <UInput
                         v-model="editForm.email"
                         type="email"
                         placeholder="Введіть ваш email"
+                        :disabled="isLoading"
                       />
                     </UFormField>
 
@@ -224,6 +191,7 @@ const handleLogout = async () => {
                         color="neutral"
                         variant="outline"
                         @click="cancelEditing"
+                        :disabled="isLoading"
                       >
                         Скасувати
                       </UButton>
@@ -231,6 +199,7 @@ const handleLogout = async () => {
                         type="submit"
                         color="neutral"
                         :loading="isLoading"
+                        :disabled="!hasChanges"
                       >
                         Зберегти
                       </UButton>

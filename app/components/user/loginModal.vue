@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useAuth } from '~/composables/auth/useAuth'
+import { useAuthValidation } from '~/composables/auth/useAuthValidation'
+
 interface LoginFormData {
   phone: string
   code: string
@@ -10,12 +13,23 @@ interface Props {
 
 interface Emits {
   (e: 'update:modelValue', value: boolean): void
-  (e: 'success', user: any): void
+  (e: 'success'): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+// Композаблы
+const { sendVerificationCode, login, isLoading } = useAuth()
+const { 
+  formatPhone, 
+  isPhoneValid, 
+  isCodeValid,
+  validateSendCodeForm,
+  validateLoginForm
+} = useAuthValidation()
+
+// Локальное состояние
 const step = ref<'phone' | 'code'>('phone')
 const countdown = ref(0)
 const countdownInterval = ref<NodeJS.Timeout | null>(null)
@@ -25,31 +39,37 @@ const formData = ref<LoginFormData>({
   code: ''
 })
 
-// Используем новый composable
-const {
-  formatPhone,
-  isCodeValid,
-  isPhoneValid,
-  sendVerificationCode,
-  verifyCodeAndLogin,
-  isLoading
-} = useAuth()
+// Ошибки валидации
+const validationErrors = ref<Record<string, string>>({})
 
-// Управление состоянием модального окна
+// Управление модальным окном
 const isOpen = computed({
   get: () => props.modelValue,
   set: (value: boolean) => emit('update:modelValue', value)
 })
 
-// Обработка ввода номера телефона
+// Обработка ввода номера телефона с валидацией
 const handlePhoneInput = (event: Event) => {
   const target = event.target as HTMLInputElement
   const formatted = formatPhone(target.value)
   formData.value.phone = formatted
   target.value = formatted
+  
+  // Очищаем ошибки при вводе
+  if (validationErrors.value.phone) {
+    delete validationErrors.value.phone
+  }
 }
 
-// Запуск таймера обратного отсчета
+// Обработка ввода кода с валидацией
+const handleCodeInput = () => {
+  // Очищаем ошибки при вводе
+  if (validationErrors.value.code) {
+    delete validationErrors.value.code
+  }
+}
+
+// Управление таймером
 const startCountdown = () => {
   countdown.value = 60
   countdownInterval.value = setInterval(() => {
@@ -61,7 +81,6 @@ const startCountdown = () => {
   }, 1000)
 }
 
-// Остановка таймера
 const stopCountdown = () => {
   if (countdownInterval.value) {
     clearInterval(countdownInterval.value)
@@ -74,34 +93,66 @@ const stopCountdown = () => {
 const resendCode = async () => {
   if (countdown.value > 0) return
   
+  // Валидируем номер телефона перед отправкой
+  const validation = validateSendCodeForm({ phone: formData.value.phone })
+  
+  if (!validation.success) {
+    validationErrors.value = validation.errors
+    return
+  }
+  
   const result = await sendVerificationCode(formData.value.phone)
   if (result.success) {
     startCountdown()
   }
 }
 
-// Обработка основного действия
+// Основное действие формы
 const handleSubmit = async () => {
   if (step.value === 'phone') {
+    // Валидируем форму отправки кода
+    const validation = validateSendCodeForm({ phone: formData.value.phone })
+    
+    if (!validation.success) {
+      validationErrors.value = validation.errors
+      return
+    }
+    
+    validationErrors.value = {}
     const result = await sendVerificationCode(formData.value.phone)
+    
     if (result.success) {
       step.value = 'code'
       formData.value.code = ''
       startCountdown()
     }
   } else {
-    const result = await verifyCodeAndLogin(formData.value.phone, formData.value.code)
+    // Валидируем форму входа
+    const validation = validateLoginForm({
+      phone: formData.value.phone,
+      code: formData.value.code
+    })
+    
+    if (!validation.success) {
+      validationErrors.value = validation.errors
+      return
+    }
+    
+    validationErrors.value = {}
+    const result = await login(formData.value.phone, formData.value.code)
+    
     if (result.success) {
-      emit('success', result.user)
+      emit('success')
       handleClose()
     }
   }
 }
 
-// Возврат к вводу номера
+// Возврат к вводу телефона
 const goBackToPhone = () => {
   step.value = 'phone'
   formData.value.code = ''
+  validationErrors.value = {}
   stopCountdown()
 }
 
@@ -117,10 +168,8 @@ watch(isOpen, (newValue) => {
   if (!newValue) {
     setTimeout(() => {
       step.value = 'phone'
-      formData.value = {
-        phone: '',
-        code: ''
-      }
+      formData.value = { phone: '', code: '' }
+      validationErrors.value = {}
       stopCountdown()
     }, 200)
   }
@@ -131,16 +180,20 @@ onUnmounted(() => {
   stopCountdown()
 })
 
-// Горячие клавиши
+// Обработка Enter с валидацией
 const handleKeyPress = (event: KeyboardEvent) => {
   if (event.key === 'Enter' && !isLoading.value) {
-    if (step.value === 'phone' && isPhoneValid(formData.value.phone)) {
-      handleSubmit()
-    } else if (step.value === 'code' && isCodeValid(formData.value.code)) {
-      handleSubmit()
-    }
+    handleSubmit()
   }
 }
+
+// Вычисляемые свойства для отображения ошибок
+const phoneError = computed(() => validationErrors.value.phone)
+const codeError = computed(() => validationErrors.value.code)
+
+// Состояния кнопок
+const isPhoneStepValid = computed(() => isPhoneValid(formData.value.phone))
+const isCodeStepValid = computed(() => isCodeValid(formData.value.code))
 </script>
 
 <template>
@@ -158,7 +211,7 @@ const handleKeyPress = (event: KeyboardEvent) => {
           label="Номер телефону" 
           name="phone"
           required
-          :error="formData.phone && !isPhoneValid(formData.phone) ? 'Невірний формат номера телефону' : undefined"
+          :error="phoneError"
         >
           <UInput
             v-model="formData.phone"
@@ -177,7 +230,7 @@ const handleKeyPress = (event: KeyboardEvent) => {
           </UInput>
         </UFormField>
 
-        <!-- Поле ввода кода (показывается после отправки) -->
+        <!-- Поле ввода кода -->
         <Transition
           enter-active-class="transition-all duration-300 ease-out"
           enter-from-class="opacity-0 transform -translate-y-2"
@@ -191,7 +244,7 @@ const handleKeyPress = (event: KeyboardEvent) => {
             label="Код підтвердження" 
             name="code"
             required
-            :error="formData.code && !isCodeValid(formData.code) ? 'Код має містити 6 цифри' : undefined"
+            :error="codeError"
           >
             <UInput
               v-model="formData.code"
@@ -201,6 +254,7 @@ const handleKeyPress = (event: KeyboardEvent) => {
               autocomplete="one-time-code"
               :disabled="isLoading"
               class="text-center tracking-widest text-lg"
+              @input="handleCodeInput"
             >
               <template #leading>
                 <UIcon name="i-lucide-shield-check" class="w-4 h-4" />
@@ -248,6 +302,15 @@ const handleKeyPress = (event: KeyboardEvent) => {
             </UButton>
           </div>
         </Transition>
+
+        <!-- Общие ошибки валидации -->
+        <UAlert 
+          v-if="validationErrors.general" 
+          color="error" 
+          variant="soft"
+          :title="validationErrors.general"
+          class="mt-4"
+        />
       </form>
     </template>
 
@@ -264,7 +327,7 @@ const handleKeyPress = (event: KeyboardEvent) => {
         <UButton 
           @click="handleSubmit"
           :loading="isLoading"
-          :disabled="step === 'phone' ? !isPhoneValid(formData.phone) : !isCodeValid(formData.code)"
+          :disabled="step === 'phone' ? !isPhoneStepValid : !isCodeStepValid"
           class="min-w-24"
         >
           {{ step === 'phone' ? 'Далі' : 'Увійти' }}

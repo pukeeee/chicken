@@ -1,5 +1,5 @@
 <script setup>
-import { ORDER_STATUS_CONFIG, PAYMENT_METHOD_CONFIG } from '~/constants/orderConstants'
+import { ORDER_STATUS_CONFIG, PAYMENT_METHOD_CONFIG } from '~~/shared/constants/orderConstants'
 import { useOrders } from '~/composables/useOrders'
 
 definePageMeta({

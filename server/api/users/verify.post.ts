@@ -1,38 +1,28 @@
 import { codeService } from '~~/server/services/users/codeService'
+import { authSchemas } from '~~/shared/validation/schemas'
+import { validateBody, createValidationError } from '~~/server/utils/validation'
 
 export default defineEventHandler(async (event) => {
   try {
-    const body = await readBody(event)
-    const { phone } = body
+    // Валидация входных данных с помощью Zod
+    const validationResult = await validateBody(event, authSchemas.sendCode)
 
-    // Валидация номера телефона
-    if (!phone || typeof phone !== 'string') {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Номер телефону обов\'язковий'
-      })
+    if (!validationResult.success) {
+      throw createValidationError(validationResult)
     }
 
-    // Проверка формата телефона
-    const phoneRegex = /^\+380\d{9}$/
-    if (!phoneRegex.test(phone)) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Невірний формат номера телефону'
-      })
-    }
+    const { phone } = validationResult.data!
 
     // Генерируем и сохраняем код
     const code = await codeService.createAndStore(phone)
     
     // В реальном приложении здесь был бы вызов SMS-сервиса
     console.log(`📱 OTP code for ${phone}: ${code}`)
-    
+
     return {
       success: true,
       message: 'Код підтвердження надіслано'
     }
-
   } catch (err: any) {
     console.error('Verify API error:', err)
     

@@ -1,10 +1,5 @@
 <script setup>
-import { onMounted } from 'vue'
 
-onMounted(async () => {
-  // Инициализируем корзину
-  useCart()
-})
 </script>
 
 <template>

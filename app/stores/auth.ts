@@ -1,73 +1,31 @@
 import { defineStore } from 'pinia'
-import type { User, AuthState, PublicUser } from '~~/shared/types/auth'
+import type { AuthState, PublicUser } from '~~/shared/types/auth'
 
-interface AuthActions {
-  isPhoneValid(phone: string): boolean;
-  isCodeValid(code: string): boolean;
-  formatPhone(value: string): string;
-  fetchUser(): Promise<void>;
-  sendVerificationCode(phone: string): Promise<{ success: boolean; step?: string }>;
-  verifyCodeAndLogin(phone: string, code: string): Promise<{ success: boolean; user?: User }>;
-  logout(): Promise<void>;
-  updateUser(userData: Partial<PublicUser>): Promise<PublicUser | null>;
-  clearAuth(): void;
-  hasRole(role: string): boolean;
-}
-
-export const useAuthStore = defineStore<string, AuthState, any, AuthActions>('auth', {
+export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
     user: null,
     isAuthenticated: false,
     isLoading: false,
-    isInitialized: false // Новое поле для отслеживания инициализации
+    isInitialized: false
   }),
 
   getters: {
-    // Геттеры для удобства
-    isLoggedIn: (state: AuthState) => state.isAuthenticated && !!state.user,
-    userName: (state: AuthState) => state.user?.name || state.user?.phone || 'Користувач',
-    userPhone: (state: AuthState) => state.user?.phone || null,
-    needsAuth: (state: AuthState) => !state.isAuthenticated && state.isInitialized,
+    isLoggedIn: (state) => state.isAuthenticated && !!state.user,
+    userName: (state) => state.user?.name || state.user?.phone || 'Користувач',
+    userPhone: (state) => state.user?.phone || null,
+    needsAuth: (state) => !state.isAuthenticated && state.isInitialized,
   },
 
   actions: {
-    // --- Утилиты валидации ---
-    isPhoneValid(phone: string): boolean {
-      const phoneRegex = /^\+380\d{9}$/
-      return phoneRegex.test(phone)
-    },
-
-    isCodeValid(code: string): boolean {
-      return code.length === 6 && /^[123456789ABCDEFGHJKLMNPQRSTUVWXYZ]{6}$/.test(code)
-    },
-
-    formatPhone(value: string): string {
-      let digits = value.replace(/\D/g, '')
-      
-      if (digits.startsWith('380')) {
-        digits = '+' + digits
-      } else if (digits.startsWith('80')) {
-        digits = '+3' + digits
-      } else if (digits.startsWith('0')) {
-        digits = '+38' + digits
-      } else if (digits.length <= 9 && !digits.startsWith('380')) {
-        digits = '+380' + digits
-      }
-      
-      return digits.slice(0, 13)
-    },
-
-    // --- Инициализация состояния из cookie ---
-    async fetchUser(): Promise<void> {
-      // Если состояние уже инициализировано (например, на сервере), не делаем ничего.
-      // Это предотвращает сброс состояния на клиенте, где HttpOnly cookie недоступен.
-      if (this.isInitialized) {
-        return
-      }
+    /**
+     * Инициализация состояния авторизации
+     * Проверяет наличие валидного токена и загружает данные пользователя
+     */
+    async initialize(): Promise<void> {
+      if (this.isInitialized) return
 
       const userToken = useCookie('user_token')
-
-      // Если токена нет, сессия не активна
+      
       if (!userToken.value) {
         this.isAuthenticated = false
         this.user = null
@@ -75,51 +33,49 @@ export const useAuthStore = defineStore<string, AuthState, any, AuthActions>('au
         return
       }
 
-      // Если токен есть, но мы уже авторизованы (например, после логина), не делаем лишний запрос
+      // Если токен есть, но пользователь уже авторизован, не делаем лишний запрос
       if (this.isAuthenticated && this.user) {
         this.isInitialized = true
         return
       }
 
+      await this.fetchUser()
+    },
+
+    /**
+     * Загрузка данных пользователя с сервера
+     */
+    async fetchUser(): Promise<void> {
       try {
         this.isLoading = true
+        
         const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
         
-        const data = await $fetch<{ success: boolean, user: PublicUser }>('/api/users/', {
+        const response = await $fetch<{ success: boolean, user: PublicUser }>('/api/users/', {
           method: 'GET',
           headers,
         })
         
-        if (data.success && data.user) {
-          this.user = data.user
+        if (response.success && response.user) {
+          this.user = response.user
           this.isAuthenticated = true
         } else {
           this.clearAuth()
-          userToken.value = null
         }
         
       } catch (error: any) {
-        console.error('Auth check failed, clearing session:', error.message)
-        this.clearAuth() // Очищаем cookie, если токен невалидный
-        userToken.value = null
+        console.error('Auth check failed:', error.message)
+        this.clearAuth()
       } finally {
         this.isLoading = false
         this.isInitialized = true
       }
     },
 
-    // --- Отправка кода ---
-    async sendVerificationCode(phone: string): Promise<{ success: boolean; step?: string }> {
-      if (!this.isPhoneValid(phone)) {
-        const toast = useToast()
-        toast.add({
-          title: 'Помилка',
-          description: 'Введіть коректний номер телефону',
-          color: 'error'
-        })
-        return { success: false }
-      }
-
+    /**
+     * Отправка кода подтверждения
+     */
+    async sendVerificationCode(phone: string): Promise<{ success: boolean }> {
       try {
         this.isLoading = true
         
@@ -128,116 +84,74 @@ export const useAuthStore = defineStore<string, AuthState, any, AuthActions>('au
           body: { phone }
         })
         
-        const toast = useToast()
-        toast.add({
-          title: 'Успішно',
-          description: `Код підтвердження надіслано на номер ${phone}`,
-          color: 'success'
-        })
+        this.showToast('success', 'Код підтвердження надіслано', `Код надіслано на номер ${phone}`)
+        return { success: true }
         
-        return { success: true, step: 'code' }
-        
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error sending verification code:', error)
-        const toast = useToast()
-        toast.add({
-          title: 'Помилка',
-          description: 'Не вдалося надіслати код підтвердження',
-          color: 'error'
-        })
+        this.showToast('error', 'Помилка', 'Не вдалося надіслати код підтвердження')
         return { success: false }
       } finally {
         this.isLoading = false
       }
     },
 
-    // --- Вход ---
-    async verifyCodeAndLogin(phone: string, code: string): Promise<{ success: boolean; user?: User }> {
-      if (!this.isCodeValid(code)) {
-        const toast = useToast()
-        toast.add({
-          title: 'Помилка',
-          description: 'Код має містити 6 символів',
-          color: 'error'
-        })
-        return { success: false }
-      }
-
+    /**
+     * Вход в систему с проверочным кодом
+     */
+    async verifyCodeAndLogin(phone: string, code: string): Promise<{ success: boolean; user?: PublicUser }> {
       try {
         this.isLoading = true
 
-        const data = await $fetch<{user: User}>('/api/users/login', {
+        const response = await $fetch<{ user: PublicUser }>('/api/users/login', {
           method: 'POST',
           body: { phone, code }
         })
         
-        // Устанавливаем состояние напрямую без дополнительного запроса
-        this.user = {
-          id: data.user.id,
-          phone: data.user.phone,
-          name: data.user.name,
-          email: data.user.email,
-          createdAt: data.user.createdAt.toString()
-        }
+        // Устанавливаем состояние напрямую
+        this.user = response.user
         this.isAuthenticated = true
 
-        const toast = useToast()
-        toast.add({
-          title: 'Успішно!',
-          description: 'Ви ввійшли у свій акаунт.',
-          color: 'success'
-        })
-
-        return { success: true, user: data.user }
+        this.showToast('success', 'Успішно!', 'Ви ввійшли у свій акаунт')
+        return { success: true, user: response.user }
         
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error verifying code:', error)
-        const toast = useToast()
-        toast.add({
-          title: 'Помилка',
-          description: 'Невірний код підтвердження',
-          color: 'error'
-        })
+        this.showToast('error', 'Помилка', 'Невірний код підтвердження')
         return { success: false }
       } finally {
         this.isLoading = false
       }
     },
 
-    // --- Выход ---
+    /**
+     * Выход из системы
+     */
     async logout(): Promise<void> {
-      await $fetch('/api/users/logout', { method: 'DELETE' })
-      this.clearAuth() // Очищаем состояние
-
-      const userToken = useCookie('user_token')
-      userToken.value = null
-
-      const toast = useToast()
-      toast.add({
-        title: 'Ви вийшли',
-        description: 'Ви успішно вийшли зі свого акаунту.',
-        color: 'info'
-      })
-
+      try {
+        await $fetch('/api/users/logout', { method: 'DELETE' })
+      } catch (error) {
+        console.error('Logout error:', error)
+      }
+      
+      this.clearAuth()
+      this.showToast('info', 'Ви вийшли', 'Ви успішно вийшли зі свого акаунту')
       await navigateTo('/')
     },
 
-    // --- Обновление пользователя ---
+    /**
+     * Обновление данных пользователя
+     */
     async updateUser(userData: Partial<PublicUser>): Promise<PublicUser | null> {
       if (!this.user) {
-        const toast = useToast()
-        toast.add({
-          title: 'Помилка',
-          description: 'Користувач не авторизований',
-          color: 'error'
-        })
+        this.showToast('error', 'Помилка', 'Користувач не авторизований')
         return null
       }
       
       try {
         this.isLoading = true
         
-        const data = await $fetch<{user: PublicUser}>('/api/users/', {
+        const response = await $fetch<{ user: PublicUser }>('/api/users/', {
           method: 'PATCH',
           body: {
             name: userData.name,
@@ -245,43 +159,53 @@ export const useAuthStore = defineStore<string, AuthState, any, AuthActions>('au
           }
         })
         
-        // Обновляем состояние напрямую
-        this.user = data.user
-
-        const toast = useToast()
-        toast.add({
-          title: 'Збережено',
-          description: 'Ваші дані успішно оновлено.',
-          color: 'success'
-        })
-
-        return data.user
+        this.user = response.user
+        this.showToast('success', 'Збережено', 'Ваші дані успішно оновлено')
+        return response.user
         
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error updating user:', error)
-        const toast = useToast()
-        toast.add({
-          title: 'Помилка',
-          description: 'Не вдалося оновити дані користувача',
-          color: 'error'
-        })
+        this.showToast('error', 'Помилка', 'Не вдалося оновити дані користувача')
         return null
       } finally {
         this.isLoading = false
       }
     },
 
-    // --- Очистка состояния ---
+    /**
+     * Принудительная проверка авторизации
+     */
+    async checkAuth(): Promise<boolean> {
+      await this.fetchUser()
+      return this.isAuthenticated
+    },
+
+    /**
+     * Очистка состояния авторизации
+     */
     clearAuth(): void {
       this.user = null
       this.isAuthenticated = false
+      
+      const userToken = useCookie('user_token')
+      userToken.value = null
     },
 
-    // --- Проверка роли (для будущего расширения) ---
+    /**
+     * Проверка роли пользователя (для будущего использования)
+     */
     hasRole(role: string): boolean {
-      // В текущей реализации у пользователей нет ролей в PublicUser
-      // Но можно добавить при необходимости
+      // В текущей реализации роли нет в PublicUser
+      // Можно добавить при необходимости
       return false
+    },
+
+    /**
+     * Вспомогательный метод для показа уведомлений
+     */
+    showToast(color: 'success' | 'error' | 'info' | 'warning', title: string, description?: string): void {
+      const toast = useToast()
+      toast.add({ title, description, color })
     }
   },
 })

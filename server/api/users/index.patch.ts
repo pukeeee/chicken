@@ -1,5 +1,7 @@
 import { toPublicUser } from '~~/server/services/users/userService'
 import { updateUserById } from '~~/server/repositories/user.repository'
+import { authSchemas } from '~~/shared/validation/schemas'
+import { validateBody, createValidationError, ValidationErrors } from '~~/server/utils/validation'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -13,17 +15,14 @@ export default defineEventHandler(async (event) => {
     
     const currentUser = event.context.user
     
-    // Получаем данные для обновления
-    const body = await readBody(event)
-    const { name, email } = body
+    // Валидация тела запроса с помощью Zod
+    const validationResult = await validateBody(event, authSchemas.updateProfile)
     
-    // Валидация данных
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Invalid email format'
-      })
+    if (!validationResult.success) {
+      throw createValidationError(validationResult)
     }
+    
+    const { name, email } = validationResult.data!
     
     // Обновляем пользователя в БД
     const updatedUser = await updateUserById(currentUser.id, {

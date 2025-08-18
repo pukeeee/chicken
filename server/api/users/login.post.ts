@@ -1,25 +1,18 @@
 import { codeService } from '~~/server/services/users/codeService'
 import { loginService } from '~~/server/services/users/loginService'
+import { authSchemas } from '~~/shared/validation/schemas'
+import { validateBody, createValidationError, ValidationErrors } from '~~/server/utils/validation'
 
 export default defineEventHandler(async (event) => {
   try {
-    const body = await readBody(event)
-    const { phone, code } = body
-
     // Валидация входных данных
-    if (!phone || typeof phone !== 'string') {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Номер телефону обов\'язковий'
-      })
-    }
+    const validationResult = await validateBody(event, authSchemas.login)
 
-    if (!code || typeof code !== 'string') {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Код підтвердження обов\'язковий'
-      })
+    if (!validationResult.success) {
+      throw createValidationError(validationResult)
     }
+    
+    const { phone, code } = validationResult.data!
 
     // Проверяем код через codeService
     const isCodeValid = await codeService.verify(phone, code)
@@ -27,7 +20,7 @@ export default defineEventHandler(async (event) => {
     if (!isCodeValid) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Невірний код підтвердження'
+        statusMessage: ValidationErrors.CODE_INVALID
       })
     }
 

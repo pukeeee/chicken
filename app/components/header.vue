@@ -1,6 +1,12 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
 import type { DropdownMenuItem } from '@nuxt/ui'
+import { useAuth } from '~/composables/auth/useAuth'
+
+// Авторизация
+const { isAuthenticated, isInitialized, isLoading, userName, logout } = useAuth()
+
+// Состояние модального окна
+const showLoginModal = ref(false)
 
 // Элементы мобильного меню для неавторизованных пользователей
 const guestMenuItems = ref<DropdownMenuItem[]>([
@@ -79,40 +85,30 @@ const userDropdownItems = ref<DropdownMenuItem[]>([
   }
 ])
 
-const dropdownOpen = ref(false)
-const showLoginModal = ref(false)
-
-const { 
-  isAuthenticated, 
-  isInitialized,
-  isLoading,
-  userName,
-  logout 
-} = useAuth()
-
-
-// Открыть модалку входа
+// Обработчики
 const openLoginModal = () => {
   showLoginModal.value = true
 }
 
-// Обработка успешного входа
 const handleLoginSuccess = () => {
   showLoginModal.value = false
 }
 
-// Обработка выхода из системы
 const handleLogout = async () => {
   await logout()
 }
 
-// Вычисляемое свойство для определения, что показывать
+// Вычисляемые свойства для определения, что показывать
 const shouldShowAuthButton = computed(() => {
   return isInitialized.value && !isAuthenticated.value
 })
 
 const shouldShowUserMenu = computed(() => {
   return isInitialized.value && isAuthenticated.value
+})
+
+const mobileMenuItems = computed(() => {
+  return isAuthenticated.value ? authMenuItems.value : guestMenuItems.value
 })
 </script>
 
@@ -179,22 +175,17 @@ const shouldShowUserMenu = computed(() => {
       <div class="sm:hidden">
         <UDropdownMenu
           v-if="isInitialized"
-          v-model:open="dropdownOpen"
-          :items="isAuthenticated ? authMenuItems : guestMenuItems"
-          :content="{ align: 'end', side: 'bottom', sideOffset: 8 }"
+          :items="mobileMenuItems"
           :ui="{
             content: 'bg-amber-100 text-amber-900',
             item: 'hover:bg-amber-200',
             itemLeadingIcon: 'text-amber-500'
           }"
-          :overlay="false"
         >
           <UButton
             icon="i-lucide-menu"
             class="bg-amber-500 hover:bg-amber-600 text-white"
-            variant="solid"
             :loading="isLoading"
-            @click.stop
           />
         </UDropdownMenu>
         <div v-else class="w-10 h-10 bg-amber-400 rounded"></div>
