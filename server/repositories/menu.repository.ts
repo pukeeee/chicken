@@ -12,6 +12,18 @@ export async function getProductById(id: number) {
   })
 }
 
+// Получить несколько продуктов по их ID
+export async function getProductsByIds(ids: number[]) {
+  return prisma.product.findMany({
+    where: {
+      id: {
+        in: ids,
+      },
+      isActive: true, // Убедимся, что заказывают только активные продукты
+    },
+  });
+}
+
 // Получить все категории меню
 export async function getAllCategoriesWithProducts() {
   return prisma.category.findMany({

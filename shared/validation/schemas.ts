@@ -57,46 +57,41 @@ export const authSchemas = {
   })
 }
 
-// Схемы для заказов
+// Схеми для замовлень
 export const orderSchemas = {
-  // Создание заказа
+  // Створення замовлення (дані від клієнта)
   create: z.object({
-    customerName: z.string().min(1, 'Ім\'я клієнта обов\'язкове'),
+    customerName: z.string().min(1, "Ім'я є обов'язковим полем").min(2, "Ім'я має містити щонайменше 2 символи"),
     customerPhone: phoneSchema,
     customerEmail: emailSchema,
     deliveryAddress: z.string().min(1, 'Адреса доставки обов\'язкова'),
     paymentMethod: z.enum(PaymentMethod, {
       message: 'Оберіть спосіб оплати'
     }),
-    items: z.array(
-      z.object({
-        productId: z.number().positive('ID продукту має бути позитивним'),
-        quantity: z.number().min(1, 'Кількість має бути не менше 1'),
-        price: z.number().positive('Ціна має бути позитивною')
-      })
-    ).min(1, 'Замовлення має містити хоча б один товар'),
-    total: z.number().positive('Загальна сума має бути позитивною')
+    items: z.array(z.object({
+      productId: z.number(),
+      quantity: z.number().min(1),
+      // Ціна не потрібна, бо вона буде братися з БД для безпеки
+    })).min(1, 'Кошик не може бути порожнім'),
   }),
 
-  // Обновление заказа (все поля опциональные)
+  // Оновлення замовлення (адмінська частина)
   update: z.object({
     status: z.enum(OrderStatus).optional(),
-    customerName: z.string().min(1).optional(),
+    customerName: z.string().min(2, "Ім'я є обов'язковим").optional(),
     customerPhone: phoneSchema.optional(),
-    customerEmail: emailSchema.optional(),
-    deliveryAddress: z.string().min(1).optional(),
-    paymentMethod: z.enum(PaymentMethod).optional(),
-    total: z.number().positive().optional()
+    customerEmail: z.email("Некоректний формат email").optional(),
+    deliveryAddress: z.string().min(5, "Адреса доставки є обов'язковою").optional(),
+  }).partial().refine(data => Object.keys(data).length > 0, {
+    message: 'Має бути принаймні одне поле для оновлення',
   }),
 
-  // Фильтры для поиска заказов
+  // Фільтри для пошуку замовлень (адмінська частина)
   filters: z.object({
-    status: z.string().optional(),
+    status: z.enum(OrderStatus).optional(),
     search: z.string().optional(),
-    page: z.coerce.number().min(1).default(1),
-    limit: z.coerce.number().min(1).max(100).default(10),
-    startDate: z.coerce.date().optional(),
-    endDate: z.coerce.date().optional()
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(10),
   })
 }
 

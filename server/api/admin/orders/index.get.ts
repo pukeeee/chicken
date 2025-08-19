@@ -1,17 +1,15 @@
 import { fetchAllOrders } from "~~/server/services/admin/orderService"
+import { orderSchemas } from "~~/shared/validation/schemas"
 
 export default defineEventHandler(async (event) => {
     try {
-        // Получаем query параметры
-        const query = getQuery(event)
-        const filters = {
-            status: query.status as string,
-            search: query.search as string,
-            page: parseInt(query.page as string) || 1,
-            limit: parseInt(query.limit as string) || 5
+        const query = await getValidatedQuery(event, (query) => orderSchemas.filters.safeParse(query)); 
+
+        if(!query.success){
+            throw new Error(query.error.issues.map(e => e.message).join(', ')); 
         }
-        
-        const ordersData = await fetchAllOrders(filters)
+
+        const ordersData = await fetchAllOrders(query.data);
 
         return {
             success: true,
