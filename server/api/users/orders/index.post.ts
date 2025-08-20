@@ -2,25 +2,51 @@ import { z } from 'zod'
 import { orderSchemas, type OrderCreateInput } from '~~/shared/validation/schemas'
 import { orderService } from '~~/server/services/users/orderService'
 import { ValidationError, UnauthorizedError } from '~~/server/services/errorService'
+import { createLogger } from '~~/server/utils/logger'
+import type { OrderCreationResponse } from '~~/server/types/order.types'
 
 /**
  * API-ендпоінт для створення нового замовлення.
  */
 export default defineEventHandler(async (event) => {
-  // 1. Перевіряємо, чи користувач автентифікований.
-  //    Очікується, що middleware `auth.api.ts` додає об'єкт `user` в контекст.
+  const logger = createLogger({
+    path: event.path,
+    method: event.method,
+    ip: getRequestIP(event, { xForwardedFor: true }),
+  })
+
+  // Крок 1: Перевірка аутентифікації користувача.
+  // Middleware auth.api.ts має додавати об'єкт user в контекст запиту.
   const user = event.context.user
   if (!user || !user.id) {
+    logger.warn('Спроба створення замовлення без авторизації')
     throw new UnauthorizedError('Для створення замовлення потрібна авторизація.')
   }
 
-  // 2. Читаємо тіло запиту.
-  const body = await readBody<OrderCreateInput>(event)
+  logger.info({ userId: user.id }, 'Обробка запиту на створення замовлення')
 
-  // 3. Валідуємо вхідні дані за допомогою схеми Zod.
+  // Крок 2: Читання та базова перевірка тіла запиту.
+  let body: OrderCreateInput
+  try {
+    body = await readBody<OrderCreateInput>(event)
+  } catch (error) {
+    logger.warn('Невірний формат тіла запиту')
+    throw new ValidationError('Невірний формат даних запиту.')
+  }
+
+  if (!body || typeof body !== 'object' || Object.keys(body).length === 0) {
+    throw new ValidationError('Тіло запиту не може бути порожнім.')
+  }
+
+  // Крок 3: Валідація вхідних даних за допомогою схеми Zod.
   const validationResult = orderSchemas.create.safeParse(body)
   if (!validationResult.success) {
-    // Якщо валідація не пройдена, форматуємо помилки в чистий об'єкт.
+    logger.warn({
+      validationErrors: validationResult.error.issues,
+      userId: user.id,
+    }, 'Помилка валідації даних замовлення')
+
+    // Форматування помилок для зручної обробки на клієнті.
     const fieldErrors = validationResult.error.issues.reduce((acc, issue) => {
       const path = issue.path.join('.')
       if (!acc[path]) {
@@ -30,18 +56,39 @@ export default defineEventHandler(async (event) => {
       return acc
     }, {} as Record<string, string[]>)
 
-    // Викидаємо нашу кастомну помилку валідації.
-    // Це дозволить глобальному обробнику коректно її залогувати.
     throw new ValidationError('Помилка валідації даних замовлення.', fieldErrors)
   }
 
-  // 4. Викликаємо сервіс для створення замовлення.
-  //    Вся бізнес-логіка інкапсульована в сервісі.
+  // Крок 4: Виклик сервісу для створення замовлення.
   const newOrder = await orderService.createNewOrder(user.id, validationResult.data)
 
-  // 5. Встановлюємо статус відповіді 201 (Created).
+  // Крок 5: Встановлення статусу відповіді 201 (Created).
   setResponseStatus(event, 201)
 
-  // 6. Повертаємо створене замовлення.
-  return newOrder
+  logger.info({
+    orderId: newOrder.id,
+    userId: user.id,
+    total: newOrder.total,
+  }, 'Замовлення успішно створено в API')
+
+  // Крок 6: Повернення очищених даних, необхідних для клієнта.
+  // Це запобігає витоку зайвої інформації, такої як повні дані користувача або категорії.
+  const response: OrderCreationResponse = {
+    id: newOrder.id,
+    status: newOrder.status,
+    total: newOrder.total,
+    createdAt: newOrder.createdAt,
+    items: newOrder.items.map(item => ({
+      id: item.id,
+      quantity: item.quantity,
+      price: item.price,
+      product: {
+        id: item.product.id,
+        name: item.product.name,
+        image: item.product.image,
+      },
+    })),
+  }
+
+  return response
 })

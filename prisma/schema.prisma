@@ -67,8 +67,8 @@ enum PaymentMethod {
 
 model Order {
   id              Int           @id @default(autoincrement())
-  user            User?         @relation(fields: [userId], references: [id])
-  userId          Int?
+  user            User          @relation(fields: [userId], references: [id])
+  userId          Int
   customerName    String?
   customerPhone   String?
   deliveryAddress String?

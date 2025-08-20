@@ -1,57 +1,32 @@
-import { toPublicUser } from '~~/server/services/users/userService'
-import { updateUserById } from '~~/server/repositories/user.repository'
+import { toPublicUser, updateUserProfile } from '~~/server/services/users/userService'
 import { authSchemas } from '~~/shared/validation/schemas'
-import { validateBody, createValidationError, ValidationErrors } from '~~/server/utils/validation'
+import { validateBody, createValidationError } from '~~/server/utils/validation'
 
+/**
+ * Обробник PATCH-запиту для оновлення профілю користувача.
+ */
 export default defineEventHandler(async (event) => {
-  try {
-    // Проверяем, есть ли пользователь в контексте (установлен middleware)
-    if (!event.context.user || !event.context.isAuthenticated) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized: User not authenticated'
-      })
-    }
-    
-    const currentUser = event.context.user
-    
-    // Валидация тела запроса с помощью Zod
-    const validationResult = await validateBody(event, authSchemas.updateProfile)
-    
-    if (!validationResult.success) {
-      throw createValidationError(validationResult)
-    }
-    
-    const { name, email } = validationResult.data!
-    
-    // Обновляем пользователя в БД
-    const updatedUser = await updateUserById(currentUser.id, {
-      name: name || null,
-      email: email || null
-    })
-    
-    if (!updatedUser) {
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'Failed to update user'
-      })
-    }
-    
-    return {
-      success: true,
-      user: toPublicUser(updatedUser)
-    }
-    
-  } catch (err: any) {
-    // console.error('Error in /api/users PATCH:', err)
-    
-    if (err.statusCode) {
-      throw err
-    }
-    
+  // Крок 1: Перевірка автентифікації.
+  // Middleware `auth.api.ts` має додати об'єкт `user` в контекст.
+  // Ця перевірка є додатковим рівнем безпеки.
+  if (!event.context.user?.id) {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal server error'
+      statusCode: 401,
+      statusMessage: 'Потрібна автентифікація',
     })
   }
+  
+  const user = event.context.user
+
+  // Крок 2: Валідація тіла запиту.
+  const validationResult = await validateBody(event, authSchemas.updateProfile)
+  if (!validationResult.success) {
+    throw createValidationError(validationResult)
+  }
+
+  // Крок 3: Виклик сервісу для оновлення даних.
+  const updatedUser = await updateUserProfile(user.id, validationResult.data!)
+
+  // Крок 4: Повернення публічних даних клієнту.
+  return toPublicUser(updatedUser)
 })
