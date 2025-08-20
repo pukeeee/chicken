@@ -46,7 +46,7 @@ export const useAuth = () => {
   /**
    * Обновление профиля пользователя
    */
-  const updateProfile = async (userData: { name?: string; email?: string; phone?: string }) => {
+  const updateProfile = async (userData: { name?: string; email?: string | null; phone?: string }) => {
     return await authStore.updateUser(userData)
   }
 

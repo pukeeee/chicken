@@ -43,12 +43,6 @@ const handleLogout = async () => {
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Заголовок страницы -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Особистий кабінет</h1>
-        <p class="mt-2 text-gray-600">Керуйте своїм профілем та замовленнями</p>
-      </div>
-
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Боковая панель навигации -->
         <div class="lg:col-span-1">
@@ -95,6 +89,11 @@ const handleLogout = async () => {
 
         <!-- Основной контент -->
         <div class="lg:col-span-2">
+          <!-- Заголовок страницы -->
+          <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Особистий кабінет</h1>
+            <p class="mt-2 text-gray-600">Керуйте своїм профілем та замовленнями</p>
+          </div>
           <div class="bg-white rounded-lg shadow">
             <!-- Заголовок секции -->
             <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
@@ -197,7 +196,7 @@ const handleLogout = async () => {
                       </UButton>
                       <UButton
                         type="submit"
-                        color="neutral"
+                        color="success"
                         :loading="isLoading"
                         :disabled="!hasChanges"
                       >

@@ -176,7 +176,6 @@ export const useAuthStore = defineStore('auth', {
         });
         
         this.user = response.user;
-        toastService.profileUpdateSuccess();
         return response.user;
         
       } catch (error: any) {

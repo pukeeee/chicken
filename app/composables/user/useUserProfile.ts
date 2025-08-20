@@ -1,9 +1,12 @@
-import { useAuth } from "../auth/useAuth"
+import { useAuth } from '../auth/useAuth'
 import { authSchemas } from '~~/shared/validation/schemas'
 import type { ZodError } from 'zod'
+import { toastService } from '~~/app/services/toastService'
 
 /**
- * Форматирует ошибки Zod в плоский объект, удобный для форм
+ * Форматує помилки Zod у плоский об'єкт, де ключ - це шлях до поля.
+ * @param error - Об'єкт помилки Zod.
+ * @returns Record<string, string> - Об'єкт з помилками.
  */
 const formatZodErrors = (error: ZodError) => {
   const errors: Record<string, string> = {}
@@ -17,94 +20,102 @@ const formatZodErrors = (error: ZodError) => {
 }
 
 /**
- * Композабл для работы с профилем пользователя, использующий Zod для валидации
+ * Композабл для роботи з профілем користувача, що використовує ручне керування станом редагування та валідацією.
  */
 export const useUserProfile = () => {
   const { user, updateProfile, isLoading } = useAuth()
 
-  // Состояние формы и ошибок
+  // Стан для керування режимом редагування
   const isEditing = ref(false)
-  const editForm = ref({ name: '', email: '' })
+  // Стан для даних форми
+  const editForm = ref({ name: '', email: null as string | null })
+  // Стан для помилок валідації
   const validationErrors = ref<Record<string, string>>({})
 
-  // Инициализация и сброс формы
+  /**
+   * Скидає стан форми до поточних даних користувача та очищує помилки.
+   */
   const resetForm = () => {
     if (user.value) {
       editForm.value = {
-        name: user.value.name || '',
-        email: user.value.email || '',
+        name: user.value.name ?? '',
+        email: user.value.email ?? null,
       }
     }
     validationErrors.value = {}
   }
 
-  // Следим за пользователем, чтобы инициализировать форму
-  watch(user, resetForm, { immediate: true })
+  // Ініціалізуємо форму при завантаженні та при зміні користувача
+  watch(user, resetForm, { immediate: true, deep: true })
 
-  // Вычисляемые свойства
+  /**
+   * Обчислювана властивість, що перевіряє, чи є зміни у формі.
+   */
   const hasChanges = computed(() => {
     if (!user.value) return false
     return (
-      editForm.value.name !== (user.value.name || '') ||
-      editForm.value.email !== (user.value.email || '')
+      editForm.value.name !== (user.value.name ?? '') ||
+      editForm.value.email !== (user.value.email ?? null)
     )
   })
 
-  // Действия
+  /**
+   * Вмикає режим редагування.
+   */
   const startEditing = () => {
     resetForm()
     isEditing.value = true
   }
 
+  /**
+   * Вимикає режим редагування та скидає форму.
+   */
   const cancelEditing = () => {
     resetForm()
     isEditing.value = false
   }
 
+  /**
+   * Зберігає зміни профілю.
+   */
   const saveProfile = async () => {
-    // 1. Валидация
+    // 1. Валідація даних форми
     const validationResult = authSchemas.updateProfile.safeParse(editForm.value)
     
     if (!validationResult.success) {
       validationErrors.value = formatZodErrors(validationResult.error)
-      return false
+      return
     }
     
     validationErrors.value = {}
 
-    // 2. Обновление
-    const result = await updateProfile({
-      name: editForm.value.name,
-      email: editForm.value.email,
-    })
+    // 2. Виклик API для оновлення
+    try {
+      const result = await updateProfile(editForm.value)
 
-    if (result) {
-      isEditing.value = false
-      return true
+      if (result) {
+        toastService.profileUpdateSuccess()
+        isEditing.value = false // Вимикаємо режим редагування після успішного збереження
+      }
+    } catch (error) {
+      // Помилка буде оброблена глобально, але ми можемо показати сповіщення
+      toastService.profileUpdateError()
     }
-    return false
   }
 
-  // Сброс при размонтировании
+  // Переконаємось, що режим редагування вимкнено при покиданні сторінки
   onUnmounted(() => {
     isEditing.value = false
   })
 
   return {
-    // Состояние
     isEditing: readonly(isEditing),
-    editForm, // делаем его изменяемым из компонента
+    editForm,
     validationErrors: readonly(validationErrors),
-    
-    // Вычисляемые свойства
     hasChanges: readonly(hasChanges),
-    
-    // Действия
+    isLoading: readonly(isLoading),
     startEditing,
     cancelEditing,
     saveProfile,
-    
-    // Флаги
-    isLoading: readonly(isLoading),
   }
 }

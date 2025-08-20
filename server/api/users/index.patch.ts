@@ -27,6 +27,6 @@ export default defineEventHandler(async (event) => {
   // Крок 3: Виклик сервісу для оновлення даних.
   const updatedUser = await updateUserProfile(user.id, validationResult.data!)
 
-  // Крок 4: Повернення публічних даних клієнту.
-  return toPublicUser(updatedUser)
+  // Крок 4: Повернення публічних даних клієнту у форматі, який очікує стор.
+  return { user: toPublicUser(updatedUser) }
 })
