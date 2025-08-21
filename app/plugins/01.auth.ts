@@ -11,6 +11,8 @@ export default defineNuxtPlugin(async () => {
   await initAuth()
 
   // Инициализируем корзину
-  const cartStore = useCartStore()
-  cartStore.initialize()
+  if (import.meta.client) {
+    const cartStore = useCartStore()
+    cartStore.initialize()
+  }
 })

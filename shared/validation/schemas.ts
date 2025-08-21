@@ -11,7 +11,9 @@ import { OrderStatus, PaymentMethod } from '../constants/orderConstants'
  */
 const phoneSchema = z
   .string()
-  .regex(/^\+380\d{9}$/, 'Невірний формат номера телефону (очікується +380xxxxxxxxx)')
+  .length(9, 'Номер має складатися з 9 цифр')
+  .regex(/^\d{9}$/, 'Номер може містити лише цифри')
+  .transform(val => `+380${val}`)
 
 /**
  * Базова схема для валідації коду підтвердження.
@@ -85,7 +87,7 @@ export const orderSchemas = {
   create: z.object({
     customerName: nameSchema, // Використовуємо уніфіковану схему
     customerPhone: phoneSchema,
-    customerEmail: emailSchema.nullable().optional(), // Email може бути відсутнім або null
+    customerEmail: emailSchema.min(1, { message: "Email є обов'язковим полем" }),
     deliveryAddress: z.string().min(5, 'Адреса доставки має бути детальнішою'),
     paymentMethod: z.enum(PaymentMethod, { message: 'Оберіть спосіб оплати' }),
     items: z

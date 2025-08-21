@@ -71,6 +71,7 @@ model Order {
   userId          Int
   customerName    String?
   customerPhone   String?
+  customerEmail   String
   deliveryAddress String?
   paymentMethod   PaymentMethod @default(CASH)
   status          OrderStatus   @default(PENDING)

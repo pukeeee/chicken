@@ -108,6 +108,18 @@ export const toastService = {
       ...toastDefaults.error,
     })
   },
+
+  /**
+   * Уведомление об успешном создании заказа.
+   * @param {string} orderId - ID созданного заказа.
+   */
+  orderCreateSuccess(orderId: string) {
+    getToaster().add({
+      title: 'Замовлення створено!',
+      description: `Ваше замовлення #${orderId} успішно оформлено.`,
+      ...toastDefaults.success,
+    })
+  },
   
   /**
    * Уведомление о попытке выполнить действие без авторизации.

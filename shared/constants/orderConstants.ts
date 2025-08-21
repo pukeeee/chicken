@@ -51,15 +51,18 @@ export const ORDER_STATUS_CONFIG = {
 // Конфигурация способов оплаты для UI
 export const PAYMENT_METHOD_CONFIG = {
   [PaymentMethod.CASH]: { 
-    label: 'Готівка', 
+    label: 'Готівка при отриманні', 
+    description: 'Оплата готівкою кур\'єру',
     icon: 'i-lucide-banknote' 
   },
   [PaymentMethod.CARD]: { 
-    label: 'Картка', 
+    label: 'Банківська картка', 
+    description: 'Оплата картою кур\'єру',
     icon: 'i-lucide-credit-card' 
   },
   [PaymentMethod.ONLINE]: { 
     label: 'Онлайн', 
+    description: 'Безпечна оплата онлайн',
     icon: 'i-lucide-smartphone' 
   }
 } as const
