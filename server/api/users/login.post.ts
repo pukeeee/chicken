@@ -1,11 +1,12 @@
 import { codeService } from '~~/server/services/users/codeService'
 import { loginService } from '~~/server/services/users/loginService'
-import { authSchemas } from '~~/shared/validation/schemas'
+import { authSchemas, userSchemas, type UserLoginResponse } from '~~/shared/validation/schemas'
 import { validateBody, createValidationError, ValidationErrors } from '~~/server/utils/validation'
+import { AppError } from '~~/server/services/errorService'
 
 export default defineEventHandler(async (event) => {
   try {
-    // Валидация входных данных
+    // Крок 1: Валідація вхідних даних
     const validationResult = await validateBody(event, authSchemas.login)
 
     if (!validationResult.success) {
@@ -14,37 +15,27 @@ export default defineEventHandler(async (event) => {
     
     const { phone, code } = validationResult.data!
 
-    // Проверяем код через codeService
+    // Крок 2: Перевірка коду
     const isCodeValid = await codeService.verify(phone, code)
     
     if (!isCodeValid) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: ValidationErrors.CODE_INVALID
-      })
+      // Використовуємо AppError для семантично правильних помилок
+      throw new AppError(ValidationErrors.CODE_INVALID, 400)
     }
 
-    // Получаем или создаем пользователя через loginService
+    // Крок 3: Отримання або створення користувача
     const { user, token } = await loginService.getOrCreateUser(phone)
 
-    if (!user) {
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'Помилка створення користувача'
-      })
-    }
-
-    // Устанавливаем cookie с токеном
+    // Встановлюємо cookie з токеном
     setCookie(event, 'user_token', token, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 30 // 30 дней
+      maxAge: 60 * 60 * 24 * 30 // 30 днів
     })
 
-    // console.log('🍪 Cookie set: user_token =', token.substring(0, 20) + '...')
-
-    return {
+    // Крок 4: Формування та валідація відповіді
+    const response: UserLoginResponse = {
       success: true,
       message: 'Успішний вхід в систему',
       user: {
@@ -56,16 +47,10 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-  } catch (error: any) {
-    console.error('Login API error:', error)
-    
-    if (error.statusCode) {
-      throw error
-    }
-    
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Внутрішня помилка сервера'
-    })
+    return userSchemas.loginResponse.parse(response)
+
+  } catch (error) {
+    // Глобальний errorHandler перехопить помилку
+    throw error
   }
 })

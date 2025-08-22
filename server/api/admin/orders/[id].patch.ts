@@ -1,50 +1,47 @@
-import { updateOrderService } from '~~/server/services/admin/orderService';
-import type { OrderUpdateData } from '~~/shared/types/order';
-import { cacheKeys } from '~~/server/utils/cacheKeys'
-import { cache } from '~~/server/utils/cache'
+import { updateOrderService } from '~~/server/services/admin/orderService'
+import { idSchema, orderSchemas, type OrderAdminUpdateResponse } from '~~/shared/validation/schemas'
+import { createValidationError, validateBody } from '~~/server/utils/validation'
 
 export default defineEventHandler(async (event) => {
   try {
-    // Получаем ID из параметров
-    const orderIdString = getRouterParam(event, 'id');
-  
-  if (!orderIdString) {
-    throw createError({ 
-    statusCode: 400,
-    statusMessage: 'ID заказа не предоставлен'
-    });
+    // Крок 1: Валідація ID з параметрів маршруту
+    const paramsValidation = await getValidatedRouterParams(event, (params) => idSchema.safeParse(params))
+    if (!paramsValidation.success) {
+      const errors: Record<string, string[]> = {};
+      paramsValidation.error.issues.forEach(err => {
+          const path = err.path.join('.');
+          if (!errors[path]) {
+              errors[path] = [];
+          }
+          errors[path].push(err.message);
+      });
+      throw createValidationError({
+          success: false,
+          errors: errors,
+          message: 'Невірний ID замовлення' 
+      });
+    }
+    const orderId = paramsValidation.data!.id
+
+    // Крок 2: Валідація тіла запиту
+    const bodyValidation = await validateBody(event, orderSchemas.update)
+    if (!bodyValidation.success) {
+      throw createValidationError(bodyValidation)
+    }
+
+    // Крок 3: Оновлення замовлення через сервіс
+    const updatedOrder = await updateOrderService(orderId, bodyValidation.data!)
+
+    // Крок 4: Формування та валідація відповіді
+    const response: OrderAdminUpdateResponse = {
+      success: true,
+      data: updatedOrder,
+    }
+
+    return orderSchemas.adminUpdateResponse.parse(response)
+    
+  } catch (error) {
+    // Глобальний errorHandler перехопить помилку
+    throw error
   }
-
-  const orderId = parseInt(orderIdString, 10);
-
-  if (isNaN(orderId)) {
-    throw createError({ 
-    statusCode: 400,
-    statusMessage: 'Неверный ID заказа'
-    });
-  }
-
-  const updateData: OrderUpdateData = await readBody(event);
-
-  // Обновляем заказ
-  const updatedOrder = await updateOrderService(orderId, updateData);
-
-  // Очищаем связанные кэши
-  cache.delete(cacheKeys.orders.all());
-  cache.delete(cacheKeys.orders.byId(String(orderId)));
-
-  return {
-    success: true,
-    order: updatedOrder
-  };
-  
-  } 
-  catch (error: any) {
-    console.error('Ошибка при обновлении заказа:', error);
-      
-    throw createError({
-      statusCode: error.statusCode || 500,
-      statusMessage: error.statusMessage || error.message || 'Произошла ошибка при обновлении заказа'
-    });
-  }
-});
+})

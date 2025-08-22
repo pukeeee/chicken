@@ -29,11 +29,11 @@ model Product {
   id          Int         @id @default(autoincrement())
   name        String
   description String?
-  price       Float
+  price       Decimal
   image       String?
   isActive    Boolean     @default(true)
   createdAt   DateTime    @default(now())
-  category    Category?   @relation(fields: [categoryId], references: [id])
+  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   categoryId  Int?
   orderItems  OrderItem[]
 }
@@ -67,15 +67,15 @@ enum PaymentMethod {
 
 model Order {
   id              Int           @id @default(autoincrement())
-  user            User          @relation(fields: [userId], references: [id])
+  user            User          @relation(fields: [userId], references: [id], onDelete: Restrict)
   userId          Int
-  customerName    String?
-  customerPhone   String?
+  customerName    String
+  customerPhone   String
   customerEmail   String
-  deliveryAddress String?
+  deliveryAddress String
   paymentMethod   PaymentMethod @default(CASH)
   status          OrderStatus   @default(PENDING)
-  total           Float         @default(0)
+  total           Decimal       @default(0)
   createdAt       DateTime      @default(now())
   items           OrderItem[]
   payment         Payment?
@@ -83,19 +83,21 @@ model Order {
 
 model OrderItem {
   id        Int      @id @default(autoincrement())
-  order     Order    @relation(fields: [orderId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
   orderId   Int
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
   productId Int
   quantity  Int      @default(1)
-  price     Float    // цена на момент покупки
+  price     Decimal    // цена на момент покупки
+
+  @@unique([orderId, productId])
 }
 
 model Payment {
   id        Int           @id @default(autoincrement())
   order     Order         @relation(fields: [orderId], references: [id])
   orderId   Int           @unique
-  amount    Float
+  amount    Decimal
   method    PaymentMethod @default(CASH)
   status    PaymentStatus @default(PENDING)
   createdAt DateTime      @default(now())

@@ -1,29 +1,24 @@
 import { fetchUsersOrders } from "~~/server/services/users/userService"
+import { userSchemas, type UserOrdersResponse } from "~~/shared/validation/schemas"
+import { UnauthorizedError } from "~~/server/services/errorService"
 
 export default defineEventHandler(async (event) => {
   try {
-    // Данные пользователя уже проверены и добавлены в контекст middleware'ом
+    // Крок 1: Перевірка автентифікації
     const user = event.context.user
-    const isAuthenticated = event.context.isAuthenticated
-
-    if (!user || !isAuthenticated) {
-      return {
-        success: false,
-        user: null,
-        message: 'Not authenticated'
-      }
+    if (!user?.id) {
+      throw new UnauthorizedError('Користувач не автентифікований')
     }
   
+    // Крок 2: Отримання замовлень
     const orders = await fetchUsersOrders(user.id)
 
-    return orders
+    // Крок 3: Валідація відповіді
+    // Тип відповіді UserOrdersResponse - це масив, тому ми валідуємо його напряму.
+    return userSchemas.ordersResponse.parse(orders)
   
-  } catch (err: any) {
-    console.error('Error fetching user orders:', err)
-    
-    throw createError({
-      statusCode: err.statusCode || 500,
-      statusMessage: err.statusMessage || 'An error occurred while fetching orders.'
-    })
+  } catch (error) {
+    // Глобальний errorHandler перехопить помилку
+    throw error
   }
 })

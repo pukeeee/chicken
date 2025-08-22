@@ -1,13 +1,47 @@
 import { fetchProductById } from '~~/server/services/menuService'
+import { idSchema, menuSchemas, type MenuProductResponse } from '~~/shared/validation/schemas'
+import { createValidationError } from '~~/server/utils/validation'
+import { NotFoundError } from '~~/server/services/errorService'
 
 export default defineEventHandler(async (event) => {
-  const id = Number(event.context.params?.id)
-  if (!id) {
-    throw createError({ statusCode: 400, statusMessage: 'No id provided' })
+  try {
+    // Крок 1: Валідація ID з параметрів маршруту
+    const paramsValidation = await getValidatedRouterParams(event, (params) => idSchema.safeParse(params))
+    if (!paramsValidation.success) {
+      const errors: Record<string, string[]> = {};
+      paramsValidation.error.issues.forEach(err => {
+          const path = err.path.join('.');
+          if (!errors[path]) {
+              errors[path] = [];
+          }
+          errors[path].push(err.message);
+      });
+      throw createValidationError({
+          success: false,
+          errors: errors,
+          message: 'Невірний ID продукту' 
+      });
+    }
+    const productId = paramsValidation.data!.id
+
+    // Крок 2: Отримання продукту
+    const product = await fetchProductById(productId)
+
+    // Крок 3: Перевірка, чи знайдено продукт
+    if (!product) {
+      throw new NotFoundError('Продукт', productId)
+    }
+
+    // Крок 4: Формування та валідація відповіді
+    const response: MenuProductResponse = {
+      success: true,
+      data: product,
+    }
+
+    return menuSchemas.productResponse.parse(response)
+
+  } catch (error) {
+    // Глобальний errorHandler перехопить помилку
+    throw error
   }
-  const product = await fetchProductById(id)
-  if (!product) {
-    throw createError({ statusCode: 404, statusMessage: 'Product not found' })
-  }
-  return product
 })

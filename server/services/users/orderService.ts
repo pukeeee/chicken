@@ -1,10 +1,9 @@
+import { Decimal } from '@prisma/client/runtime/library'
 import { getProductsByIds } from '~~/server/repositories/menu.repository'
 import { createOrder } from '~~/server/repositories/order.repository'
 import { NotFoundError, ValidationError } from '~~/server/services/errorService'
-import { handleDatabaseError } from '~~/server/utils/errorHandler'
 import { createLogger } from '~~/server/utils/logger'
-import type { OrderCreateInput } from '~~/shared/validation/schemas'
-import type { FullOrder } from '~~/server/types/order.types'
+import type { OrderCreateInput, OrderAdminDetails } from '~~/shared/validation/schemas'
 
 /**
  * Сервіс для обробки бізнес-логіки, пов'язаної із замовленнями користувачів.
@@ -17,7 +16,7 @@ export const orderService = {
    * @param orderData - Валідовані дані замовлення від клієнта.
    * @returns Повні дані створеного замовлення.
    */
-  async createNewOrder(userId: number, orderData: OrderCreateInput): Promise<FullOrder> {
+  async createNewOrder(userId: number, orderData: OrderCreateInput): Promise<OrderAdminDetails> {
     const logger = createLogger({ userId, operation: 'createOrder' })
 
     logger.info({
@@ -58,8 +57,9 @@ export const orderService = {
     }
 
     // Крок 4: Розрахунок загальної вартості на сервері для безпеки.
+    // Використовуємо Decimal для гарантованої точності фінансових розрахунків.
     // Ціни, що прийшли від клієнта, ігноруються.
-    let total = 0
+    let total = new Decimal(0)
     const itemsWithPrices = orderData.items.map((item) => {
       const product = productsFromDb.find((p) => p.id === item.productId)
       // Ця перевірка є надлишковою через крок 3, але додає коду надійності.
@@ -67,28 +67,26 @@ export const orderService = {
         throw new NotFoundError('Продукт', item.productId)
       }
 
-      const itemTotal = product.price * item.quantity
-      total += itemTotal
+      // Використовуємо методи Decimal для точних розрахунків
+      const itemTotal = new Decimal(product.price).times(item.quantity)
+      total = total.plus(itemTotal)
 
       return {
         productId: item.productId,
         quantity: item.quantity,
-        price: product.price, // Фіксуємо ціну на момент покупки.
+        price: product.price, // product.price вже є Decimal
       }
     })
 
-    // Округлення до 2 знаків після коми, щоб уникнути проблем з числами з плаваючою комою.
-    total = parseFloat(total.toFixed(2))
-
     // Валідація розрахованої загальної суми.
-    if (total <= 0) {
+    if (total.isNegative() || total.isZero()) {
       throw new ValidationError('Загальна сума замовлення має бути більше нуля.')
     }
-    if (total > 99999.99) {
+    if (total.greaterThan(99999.99)) {
       throw new ValidationError('Загальна сума замовлення занадто велика.')
     }
 
-    logger.info({ total, itemsCount: itemsWithPrices.length }, 'Загальна вартість розрахована')
+    logger.info({ total: total.toNumber(), itemsCount: itemsWithPrices.length }, 'Загальна вартість розрахована')
 
     // Крок 5: Виклик репозиторію для створення замовлення в БД.
     // Усі помилки, включаючи помилки БД, будуть перехоплені глобальним обробником.

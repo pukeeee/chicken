@@ -1,7 +1,7 @@
 import prisma from '~~/server/database/client'
-import type { OrderUpdateData, OrderFilters } from '~~/shared/types/order'
+import type { OrderUpdateInput, OrderFiltersInput } from '~~/shared/validation/schemas'
 
-export async function getAllOrders(filters?: OrderFilters) {
+export async function getAllOrders(filters?: OrderFiltersInput) {
     const {status, search, page = 1, limit = 5} = filters || {}
 
     // Строим фильтры для Prisma
@@ -81,32 +81,9 @@ export async function getAllOrders(filters?: OrderFilters) {
     }
 }
 
-export async function updateOrder(orderId: number, updateData: OrderUpdateData) {
+export async function updateOrder(orderId: number, updateData: OrderUpdateInput) {
   // Создаем объект только с полями, которые можно обновлять
   const prismaUpdateData: any = {};
-
-  // Обрабатываем каждое поле согласно схеме Prisma
-  if (updateData.status !== undefined) {
-    prismaUpdateData.status = updateData.status;
-  }
-  if (updateData.customerName !== undefined) {
-    prismaUpdateData.customerName = updateData.customerName;
-  }
-  if (updateData.customerPhone !== undefined) {
-    prismaUpdateData.customerPhone = updateData.customerPhone;
-  }
-  if (updateData.deliveryAddress !== undefined) {
-    prismaUpdateData.deliveryAddress = updateData.deliveryAddress;
-  }
-  if (updateData.total !== undefined) {
-    prismaUpdateData.total = updateData.total;
-  }
-  if (updateData.paymentMethod !== undefined) {
-    prismaUpdateData.paymentMethod = updateData.paymentMethod;
-  }
-  if (updateData.userId !== undefined) {
-    prismaUpdateData.userId = updateData.userId;
-  }
 
   return await prisma.order.update({
     where: { id: orderId },

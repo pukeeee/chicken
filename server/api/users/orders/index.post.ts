@@ -90,5 +90,5 @@ export default defineEventHandler(async (event) => {
     })),
   }
 
-  return response
+  return orderSchemas.createResponse.parse(response)
 })

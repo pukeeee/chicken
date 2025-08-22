@@ -1,52 +1,37 @@
-import {adminLogin} from '~~/server/services/adminService'
+import { adminLogin } from '~~/server/services/adminService'
+import { adminSchemas, type AdminLoginResponse } from '~~/shared/validation/schemas'
+import { createValidationError, validateBody } from '~~/server/utils/validation'
 
 export default defineEventHandler(async (event) => {
-    const {email, password} = await readBody(event)
-
-    // Валидация полей в теле запроса
-    if (!email || !password) {
-        throw createError({statusCode: 400, message: 'Email and password are required', fatal: false})
+  try {
+    // Крок 1: Валідація тіла запиту
+    const validationResult = await validateBody(event, adminSchemas.login)
+    if (!validationResult.success) {
+      throw createValidationError(validationResult)
     }
 
-    // Проверка токена юзера
-    try{
-        const {token} = await adminLogin(email, password)
-        
-        setCookie(event, 'admin_token', token, {
-            httpOnly: true, // Недоступен через JavaScript
-            secure: true, // Только по HTTPS
-            sameSite: 'strict', // Защита от CSRF
-            maxAge: 60 * 60 * 24 // 1 день
-        })
-    }
-    catch (error: any) {
-        throw createError({statusCode: error.statusCode || 500, message: error.message || 'Internal Server Error', fatal: false})
-    }
+    const { email, password } = validationResult.data!
+
+    // Крок 2: Виклик сервісу для логіну
+    const { token } = await adminLogin(email, password)
+
+    // Крок 3: Встановлення cookie
+    setCookie(event, 'admin_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Використовувати secure cookies в продакшені
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24, // 1 день
+    })
+
+    // Крок 4: Повернення успішної відповіді
+    const response: AdminLoginResponse = { success: true }
+
+    // Валідація відповіді (хороша практика)
+    return adminSchemas.loginResponse.parse(response)
+
+  } catch (error) {
+    // Глобальний errorHandler перехопить помилку
+    // AppError та ValidationError будуть оброблені з правильними статус-кодами
+    throw error
+  }
 })
-
-// TODO: npm install unrate
-// import { createRateLimiter } from 'unrate'
-
-// const limiter = createRateLimiter({
-//   windowMs: 60 * 1000, // 1 минута
-//   max: 5, // максимум 5 запросов
-//   message: 'Слишком много попыток. Подождите 1 минуту.',
-  // по IP
-//   key: (event) => getRequestHeader(event, 'x-forwarded-for') || getRequestIP(event)
-// })
-
-// export default defineEventHandler(async (event) => {
-//   await limiter(event)
-
-  // твой код логина
-// })
-
-// const limiter = createRateLimiter({
-//     windowMs: 15 * 60 * 1000, // 15 минут
-//     max: 5,
-//     message: 'Слишком много попыток для этого email',
-//     key: async (event) => {
-//       const body = await readBody(event)
-//       return body.email // ограничиваем по email
-//     }
-//   })

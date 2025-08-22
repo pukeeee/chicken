@@ -1,10 +1,10 @@
 import { codeService } from '~~/server/services/users/codeService'
-import { authSchemas } from '~~/shared/validation/schemas'
+import { authSchemas, userSchemas, type UserVerifyResponse } from '~~/shared/validation/schemas'
 import { validateBody, createValidationError } from '~~/server/utils/validation'
 
 export default defineEventHandler(async (event) => {
   try {
-    // Валидация входных данных с помощью Zod
+    // Крок 1: Валідація вхідних даних
     const validationResult = await validateBody(event, authSchemas.sendCode)
 
     if (!validationResult.success) {
@@ -13,26 +13,25 @@ export default defineEventHandler(async (event) => {
 
     const { phone } = validationResult.data!
 
-    // Генерируем и сохраняем код
+    // Крок 2: Генерація та збереження коду
     const code = await codeService.createAndStore(phone)
     
-    // В реальном приложении здесь был бы вызов SMS-сервиса
-    console.log(`📱 OTP code for ${phone}: ${code}`)
+    // В реальному додатку тут був би виклик SMS-сервісу
+    // Для розробки логуємо в консоль
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📱 OTP code for ${phone}: ${code}`)
+    }
 
-    return {
+    // Крок 3: Формування та валідація відповіді
+    const response: UserVerifyResponse = {
       success: true,
-      message: 'Код підтвердження надіслано'
+      message: 'Код підтвердження надіслано',
     }
-  } catch (err: any) {
-    console.error('Verify API error:', err)
-    
-    if (err.statusCode) {
-      throw err
-    }
-    
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Внутрішня помилка сервера'
-    })
+
+    return userSchemas.verifyResponse.parse(response)
+
+  } catch (error) {
+    // Глобальний errorHandler перехопить помилку
+    throw error
   }
 })

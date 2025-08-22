@@ -1,33 +1,25 @@
 import { removeToken } from '~~/server/repositories/user.repository'
+import { successSchema, type SuccessResponse } from '~~/shared/validation/schemas'
 
 export default defineEventHandler(async (event) => {
   try {
-    // Если пользователь авторизован, удаляем токен из БД
-    if (event.context.user && event.context.isAuthenticated) {
-      await removeToken(event.context.user.id)
+    const user = event.context.user
+
+    if (user?.id) {
+      // Видаляємо токен з бази даних, якщо він є
+      await removeToken(user.id)
     }
-    
-    // Удаляем cookie в любом случае
+  } finally {
+    // У будь-якому випадку видаляємо cookie
     setCookie(event, 'user_token', '', {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 0 // удалить
+      maxAge: 0, // видалити
     })
-    
-    return { success: true }
-    
-  } catch (error) {
-    console.error('Logout error:', error)
-    
-    // Все равно удаляем cookie даже при ошибке
-    setCookie(event, 'user_token', '', {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      maxAge: 0
-    })
-    
-    return { success: true }
   }
+
+  const response: SuccessResponse = { success: true }
+
+  return successSchema.parse(response)
 })
