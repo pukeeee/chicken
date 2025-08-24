@@ -1,7 +1,9 @@
+// import type { Decimal } from '@prisma/client/runtime/library' // Видалено імпорт Decimal
+
 export interface Product {
   id: number
   name: string
-  price: number
+  price: number // Ціна після десеріалізації JSON є number
   image: string | null
   // другие нужные поля
 }
@@ -15,7 +17,7 @@ export interface Category {
 export interface MenuItem {
   id: number
   name: string
-  price: number
+  price: number // Ціна після десеріалізації JSON є number
   image: string | null
   // если нужно, добавь description, categoryId и т.д.
 }

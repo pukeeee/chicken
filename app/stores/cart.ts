@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { CartService } from '~~/server/services/cartService'
-import type { CartItem, CartState } from '~~/shared/types/cart'
+import { CartService } from '~/services/cartService'
+import type { CartState } from '~~/shared/types/cart'
 
 export const useCartStore = defineStore('cart', {
   state: (): CartState => ({

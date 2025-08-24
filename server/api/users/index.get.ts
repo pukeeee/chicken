@@ -1,35 +1,27 @@
+import { userSchemas, type UserSuccessResponse } from '~~/shared/validation/schemas'
+import { UnauthorizedError } from '~~/server/services/errorService'
+
 export default defineEventHandler(async (event) => {
-  try {
-    // Данные пользователя уже проверены и добавлены в контекст middleware'ом
-    const user = event.context.user
-    const isAuthenticated = event.context.isAuthenticated
+  const user = event.context.user
+  const isAuthenticated = event.context.isAuthenticated
 
-    if (!user || !isAuthenticated) {
-      return {
-        success: false,
-        user: null,
-        message: 'Not authenticated'
-      }
-    }
-
-    return {
-      success: true,
-      user: {
-        id: user.id,
-        phone: user.phone,
-        name: user.name,
-        email: user.email,
-        createdAt: user.createdAt
-      }
-    }
-
-  } catch (err) {
-    console.error('Error in user check:', err)
-    
-    return {
-      success: false,
-      user: null,
-      message: 'Authentication check failed'
-    }
+  if (!user || !isAuthenticated) {
+    // Кидаємо стандартизовану помилку.
+    // Глобальний обробник її перехопить і відформатує відповідь.
+    throw new UnauthorizedError('Користувач не автентифікований')
   }
+
+  const response: UserSuccessResponse = {
+    success: true,
+    user: {
+      id: user.id,
+      phone: user.phone,
+      name: user.name,
+      email: user.email,
+      createdAt: user.createdAt,
+    },
+  }
+
+  // Валідуємо відповідь перед відправкою
+  return userSchemas.successResponse.parse(response)
 })

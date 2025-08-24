@@ -6,7 +6,7 @@ import { checkDatabaseHealth } from '~~/server/database/health'
  * Выполняет простую проверку соединения с БД и возвращает статус.
  * @returns {Promise<object>} Объект с состоянием здоровья, временной меткой и статусом.
  */
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async () => {
   try {
     const isHealthy = await checkDatabaseHealth()
     

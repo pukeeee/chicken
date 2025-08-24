@@ -6,7 +6,7 @@ import { checkMigrations } from '~~/server/database/migrations'
  * Проверяет, есть ли непримененные или неудачные миграции.
  * @returns {Promise<object>} Объект со статусом миграций, временной меткой и статусом.
  */
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async () => {
   try {
     const areUpToDate = await checkMigrations()
     

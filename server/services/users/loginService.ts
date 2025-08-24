@@ -1,6 +1,6 @@
-import type { User } from "~~/shared/types/auth"
-import { setToken } from "~~/server/repositories/user.repository"
-import { getUserByPhone, createUser } from "~~/server/repositories/user.repository"
+import { User } from "@prisma/client"
+import { setToken, getUserByPhone, createUser } from "~~/server/repositories/user.repository"
+import { createToken } from '~~/server/utils/jwt'
 
 export const loginService = {
   /**

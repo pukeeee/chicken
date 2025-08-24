@@ -2,7 +2,7 @@
 import { ref, onMounted, computed, shallowRef } from 'vue'
 import type { TabsItem } from '@nuxt/ui'
 import { useRoute, useRouter } from 'vue-router'
-import type { Product, Category } from '~~/shared/types/types'
+import type { Category } from '~~/shared/types/types'
 
 // Meta для страницы
 useHead({

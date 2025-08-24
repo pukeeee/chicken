@@ -4,12 +4,11 @@ import {
   updateUserById, 
   getUserByEmail 
 } from '~~/server/repositories/user.repository'
-import type { User, PublicUser } from '~~/shared/types/auth'
 import jwt from 'jsonwebtoken'
-import { Order } from '~~/shared/types/order'
 import { ValidationError } from '~~/server/services/errorService'
-import type { AuthUpdateProfileInput } from '~~/shared/validation/schemas'
+import type { AuthUpdateProfileInput, UserPublic, UserOrder } from '~~/shared/validation/schemas'
 import { invalidateUserCache } from '~~/server/utils/userCache'
+import { User } from '@prisma/client'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
@@ -19,7 +18,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
  * @param token - JWT токен.
  * @returns Публічні дані користувача або null, якщо токен невалідний або користувач неактивний.
  */
-export const getUserByToken = async (token: string): Promise<PublicUser | null> => {
+export const getUserByToken = async (token: string): Promise<UserPublic | null> => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { id: number, role: string, phone: string }
     
@@ -31,7 +30,7 @@ export const getUserByToken = async (token: string): Promise<PublicUser | null> 
     
     return toPublicUser(user)
 
-  } catch (error) {
+  } catch {
     // Повертаємо null при будь-якій помилці верифікації токена
     return null
   }
@@ -68,13 +67,13 @@ export async function updateUserProfile(userId: number, data: AuthUpdateProfileI
  * @param user - Повний об'єкт користувача з Prisma.
  * @returns Об'єкт користувача з полями, безпечними для передачі на фронтенд.
  */
-export const toPublicUser = (user: User): PublicUser => {
+export const toPublicUser = (user: User): UserPublic => {
   return {
     id: user.id,
     phone: user.phone,
     name: user.name,
     email: user.email,
-    createdAt: user.createdAt.toISOString()
+    createdAt: user.createdAt.toISOString() // <--- Перетворюємо Date на string
   }
 }
 
@@ -83,17 +82,21 @@ export const toPublicUser = (user: User): PublicUser => {
  * @param userId - ID користувача.
  * @returns Масив замовлень з деталізацією.
  */
-export const fetchUsersOrders = async (userId: number): Promise<Order[]> => {
+export const fetchUsersOrders = async (userId: number): Promise<UserOrder[]> => {
   const orders = await getUsersOrderByUserId(userId)
 
   // Prisma повертає об'єкти Date, але наш спільний тип Order очікує рядки.
+  // Prisma також повертає Decimal, але наш спільний тип Order очікує number.
   return orders.map(order => ({
     ...order,
+    total: order.total.toNumber(), // Перетворюємо Decimal на number
     createdAt: order.createdAt.toISOString(),
     items: order.items.map(item => ({
       ...item,
+      price: item.price.toNumber(), // Перетворюємо Decimal на number
       product: {
         ...item.product,
+        price: item.product.price.toNumber(), // Перетворюємо Decimal на number
         createdAt: item.product.createdAt.toISOString(),
       }
     }))

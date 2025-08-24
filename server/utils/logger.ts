@@ -65,6 +65,7 @@ const logger = pino({
  * const requestLogger = createLogger({ requestId: 'xyz-123' });
  * requestLogger.info('Processing request');
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const createLogger = (context?: Record<string, any>) => {
   return context ? logger.child(context) : logger
 }

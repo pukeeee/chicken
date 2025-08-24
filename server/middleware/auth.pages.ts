@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
       if (!user || !user.isActive) {
         throw new Error('User is inactive')
       }
-    } catch (err) {
+    } catch {
       setCookie(event, 'admin_token', '', { maxAge: -1, path: '/' })
       return sendRedirect(event, '/admin/login')
     }
@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
       if (!user || !user.isActive) {
         throw new Error('User is inactive')
       }
-    } catch (err) {
+    } catch {
       setCookie(event, 'user_token', '', { maxAge: -1, path: '/' })
       return sendRedirect(event, '/')
     }

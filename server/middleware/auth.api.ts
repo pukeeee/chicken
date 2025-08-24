@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken'
 
 export default defineEventHandler(async (event) => {
   const url = event.node.req.url || ''
+  const method = event.method
 
   // Обробляємо тільки API запити
   if (!url.startsWith('/api')) {
@@ -19,7 +20,10 @@ export default defineEventHandler(async (event) => {
     '/api/admin/login',
   ]
 
-  if (publicPaths.some((path) => url.startsWith(path))) {
+  // Дозволяємо тільки POST запит на /api/users/orders без токена
+  const isPublicOrderCreation = url === '/api/users/orders' && method === 'POST'
+
+  if (publicPaths.some((path) => url.startsWith(path)) || isPublicOrderCreation) {
     return
   }
 
@@ -73,26 +77,31 @@ export default defineEventHandler(async (event) => {
       phone: user.phone,
       name: user.name,
       email: user.email,
+      role: user.role, // <--- ДОДАНО ПОЛЕ ROLE
       createdAt: user.createdAt.toISOString(),
     }
     event.context.isAuthenticated = true
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     // При будь-якій помилці видаляємо невалідний токен
     setCookie(event, tokenName, '', { maxAge: -1, path: '/' })
 
+    // Безпечне отримання message і name
+    const errorMessage = (err instanceof Error) ? err.message : String(err);
+    const errorName = (err instanceof Error) ? err.name : '';
+
     // Якщо це помилка JWT, намагаємося інвалідувати кеш
-    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+    if (errorName === 'JsonWebTokenError' || errorName === 'TokenExpiredError') {
       try {
         const payload = jwt.verify(token, process.env.JWT_SECRET || 'secret', { ignoreExpiration: true }) as { id: number }
         if (payload?.id) {
           invalidateUserCache(payload.id)
         }
-      } catch (e) {
+      } catch {
         // Ігноруємо помилки, якщо не вдалося навіть розпарсити старий токен
       }
     }
 
-    throw createError({ statusCode: 401, statusMessage: err.message || 'Invalid or expired token' })
+    throw createError({ statusCode: 401, statusMessage: errorMessage || 'Invalid or expired token' })
   }
 })

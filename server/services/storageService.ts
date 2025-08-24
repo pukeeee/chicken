@@ -15,6 +15,7 @@ export class StorageService {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static setItem(key: string, value: any): void {
     if (!this.isClient()) return
     
