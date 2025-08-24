@@ -1,6 +1,7 @@
 import { getUserByEmail, setToken } from '~~/server/repositories/user.repository'
 import { compare } from '~~/server/utils/bcrypt'
 import { createToken } from '~~/server/utils/jwt'
+import { setCachedUser } from '~~/server/utils/userCache'
 
 export const adminLogin = async (email: string, password: string) => {
     const admin = await getUserByEmail(email)
@@ -12,6 +13,9 @@ export const adminLogin = async (email: string, password: string) => {
             fatal: false
         })
     }
+
+    // Оновлюємо кеш свіжими даними адміна
+    setCachedUser(admin)
 
     const validPassword = await compare(password, admin.password)
     

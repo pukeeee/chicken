@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken'
 
 export default defineEventHandler(async (event) => {
   const url = event.node.req.url || ''
+  const method = event.method
 
   // Обробляємо тільки API запити
   if (!url.startsWith('/api')) {
@@ -19,7 +20,10 @@ export default defineEventHandler(async (event) => {
     '/api/admin/login',
   ]
 
-  if (publicPaths.some((path) => url.startsWith(path))) {
+  // Дозволяємо тільки POST запит на /api/users/orders без токена
+  const isPublicOrderCreation = url === '/api/users/orders' && method === 'POST'
+
+  if (publicPaths.some((path) => url.startsWith(path)) || isPublicOrderCreation) {
     return
   }
 
@@ -73,6 +77,7 @@ export default defineEventHandler(async (event) => {
       phone: user.phone,
       name: user.name,
       email: user.email,
+      role: user.role, // <--- ДОДАНО ПОЛЕ ROLE
       createdAt: user.createdAt.toISOString(),
     }
     event.context.isAuthenticated = true

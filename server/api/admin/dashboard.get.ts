@@ -1,5 +1,5 @@
 export default defineEventHandler(async (event) => {
-  const user = event.context.auth
+  const user = event.context.user
 
   // Проверяем, что пользователь авторизован
   if (!user) {

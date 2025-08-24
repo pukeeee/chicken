@@ -73,7 +73,7 @@ export const toPublicUser = (user: User): UserPublic => {
     phone: user.phone,
     name: user.name,
     email: user.email,
-    createdAt: user.createdAt
+    createdAt: user.createdAt.toISOString() // <--- Перетворюємо Date на string
   }
 }
 

@@ -18,7 +18,6 @@ export default defineEventHandler(async (event) => {
   const isCodeValid = await codeService.verify(phone, code)
   
   if (!isCodeValid) {
-    // Використовуємо AppError для семантично правильних помилок
     throw new AppError(400, ValidationErrors.CODE_INVALID, 'CODE_INVALID')
   }
 
@@ -30,7 +29,7 @@ export default defineEventHandler(async (event) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 30 // 30 днів
+    maxAge: 60 * 60 * 24 * 30, // 30 днів
   })
 
   // Крок 4: Формування та валідація відповіді
@@ -42,9 +41,10 @@ export default defineEventHandler(async (event) => {
       phone: user.phone,
       name: user.name,
       email: user.email,
-      createdAt: user.createdAt.toISOString()
-    }
+      createdAt: user.createdAt.toISOString(),
+    },
   }
 
+  // Nitro автоматично виведе схему відповіді з цього типу
   return userSchemas.loginResponse.parse(response)
 })

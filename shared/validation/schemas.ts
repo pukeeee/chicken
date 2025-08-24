@@ -11,8 +11,27 @@ import { OrderStatus, PaymentMethod } from '../constants/orderConstants'
  */
 const phoneSchema = z
   .string()
-  .length(9, 'Номер має складатися з 9 цифр')
-  .regex(/^\d{9}$/, 'Номер може містити лише цифри')
+  .trim()
+  // Трансформуємо номер, видаляючи можливий префікс
+  .transform((val) => {
+    if (val.startsWith('+380')) {
+      return val.substring(4);
+    }
+    if (val.startsWith('380')) {
+      return val.substring(3);
+    }
+    if (val.startsWith('0')) {
+      return val.substring(1);
+    }
+    return val;
+  })
+  // Валідуємо очищений номер
+  .pipe(
+    z.string()
+      .length(9, 'Номер має складатися з 9 цифр після очищення')
+      .regex(/^\d{9}$/, 'Номер може містити лише цифри')
+  )
+  // Повертаємо фінальний номер у форматі +380xxxxxxxxx
   .transform(val => `+380${val}`)
 
 /**
@@ -151,15 +170,15 @@ export const menuSchemas = {
 // =================================================================
 
 /**
- * Схема з публічними даними користувача, безпечними для передачі на клієнт.
+ * Схема з публічними даними користувача для API відповідей (createdAt: string)
  */
 const userPublicSchema = z.object({
   id: z.number().int(),
   phone: z.string(),
   name: z.string().nullable(),
   email: z.email().nullable(),
-  createdAt: z.date(), // Prisma повертає об'єкт Date
-})
+  createdAt: z.string().datetime(),
+});
 
 /**
  * Схема одного замовлення для особистого кабінету користувача.
@@ -273,25 +292,25 @@ const orderAdminDetailsSchema = z.object({
   deliveryAddress: z.string(),
   paymentMethod: z.enum(Object.values(PaymentMethod) as [string, ...string[]]),
   status: z.enum(Object.values(OrderStatus) as [string, ...string[]]),
-  total: z.number(),
+  total: z.coerce.number(),
   createdAt: z.date(), // Prisma повертає об'єкт Date
   items: z.array(z.object({
     id: z.number().int(),
     orderId: z.number().int(),
     productId: z.number().int(),
     quantity: z.number().int(),
-    price: z.number(),
-    product: menuProductDetailsSchema,
+    price: z.coerce.number(),
+    product: menuProductDetailsSchema.extend({ price: z.coerce.number() }),
   })),
   payment: z.object({
     id: z.number().int(),
     orderId: z.number().int(),
-    amount: z.number(),
+    amount: z.coerce.number(),
     method: z.enum(Object.values(PaymentMethod) as [string, ...string[]]),
     status: z.enum(['PENDING', 'COMPLETED', 'FAILED', 'REFUNDED']),
     createdAt: z.date(), // Prisma повертає об'єкт Date
   }).nullable(),
-  user: userPublicSchema,
+  user: userPublicSchema.extend({ createdAt: z.date() }),
 })
 
 /**

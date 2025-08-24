@@ -121,104 +121,25 @@ function goBack() {
             <UBadge v-if="!cart.isEmpty" :label="`${cart.items.length} товарів`" color="primary" variant="subtle" />
           </div>
 
-          <div v-if="cart.isEmpty" class="text-center py-16">
-            <div class="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-              <UIcon name="i-heroicons-shopping-bag" class="w-12 h-12 text-gray-400" />
-            </div>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">Ваш кошик порожній</h3>
-            <p class="text-gray-500 mb-6">Додайте товари з нашого меню</p>
-            <UButton to="/" color="primary" size="lg">
-              Переглянути меню
-            </UButton>
-          </div>
-
-          <template v-else>
-            <!-- Mobile Card Layout -->
-            <div class="block sm:hidden space-y-4">
-              <UCard v-for="item in cart.items" :key="item.id" class="overflow-hidden">
-                <template #header>
-                  <div class="flex justify-between items-start">
-                    <h3 class="font-semibold text-gray-900">{{ item.name }}</h3>
-                    <UButton 
-                      variant="ghost" 
-                      color="error" 
-                      icon="i-heroicons-trash" 
-                      size="sm" 
-                      @click="cart.removeFromCart(item.id)"
-                    />
-                  </div>
-                </template>
-                
-                <div class="space-y-3">
-                  <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-500">Кількість</span>
-                    <div class="flex items-center gap-2">
-                      <UButton 
-                        variant="outline" 
-                        icon="i-heroicons-minus" 
-                        size="xs" 
-                        :disabled="item.quantity <= 1"
-                        @click="cart.changeQuantity(item.id, -1)" 
-                      />
-                      <span class="min-w-[2rem] text-center font-medium">{{ item.quantity }}</span>
-                      <UButton 
-                        variant="outline" 
-                        icon="i-heroicons-plus" 
-                        size="xs" 
-                        @click="cart.changeQuantity(item.id, 1)" 
-                      />
-                    </div>
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-500">Ціна за одиницю</span>
-                    <span class="font-medium">{{ item.price }} ₴</span>
-                  </div>
-                  <div class="flex justify-between items-center pt-2 border-t">
-                    <span class="font-semibold">Всього</span>
-                    <span class="font-bold text-lg text-primary-600">{{ item.price * item.quantity }} ₴</span>
-                  </div>
-                </div>
-              </UCard>
+          <ClientOnly>
+            <div v-if="cart.isEmpty" class="text-center py-16">
+              <div class="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                <UIcon name="i-heroicons-shopping-bag" class="w-12 h-12 text-gray-400" />
+              </div>
+              <h3 class="text-lg font-medium text-gray-900 mb-2">Ваш кошик порожній</h3>
+              <p class="text-gray-500 mb-6">Додайте товари з нашого меню</p>
+              <UButton to="/" color="primary" size="lg">
+                Переглянути меню
+              </UButton>
             </div>
 
-            <!-- Desktop Table Layout -->
-            <div class="hidden sm:block overflow-x-auto">
-              <table class="min-w-full">
-                <thead>
-                  <tr class="border-b border-gray-200">
-                    <th class="px-4 py-3 text-left font-semibold text-gray-900">Товар</th>
-                    <th class="px-4 py-3 text-center font-semibold text-gray-900">Кількість</th>
-                    <th class="px-4 py-3 text-center font-semibold text-gray-900">Ціна за од.</th>
-                    <th class="px-4 py-3 text-center font-semibold text-gray-900">Всього</th>
-                    <th class="px-4 py-3 text-center font-semibold text-gray-900">Дії</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="item in cart.items" :key="item.id" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td class="px-4 py-4">
-                      <div class="font-medium text-gray-900">{{ item.name }}</div>
-                    </td>
-                    <td class="px-4 py-4 text-center">
-                      <div class="flex items-center justify-center gap-2">
-                        <UButton 
-                          variant="outline" 
-                          icon="i-heroicons-minus" 
-                          size="xs"
-                          :disabled="item.quantity <= 1"
-                          @click="cart.changeQuantity(item.id, -1)" 
-                        />
-                        <span class="min-w-[2rem] font-medium">{{ item.quantity }}</span>
-                        <UButton 
-                          variant="outline" 
-                          icon="i-heroicons-plus" 
-                          size="xs" 
-                          @click="cart.changeQuantity(item.id, 1)" 
-                        />
-                      </div>
-                    </td>
-                    <td class="px-4 py-4 text-center font-medium">{{ item.price }} ₴</td>
-                    <td class="px-4 py-4 text-center font-bold text-primary-600">{{ item.price * item.quantity }} ₴</td>
-                    <td class="px-4 py-4 text-center">
+            <template v-else>
+              <!-- Mobile Card Layout -->
+              <div class="block sm:hidden space-y-4">
+                <UCard v-for="item in cart.items" :key="item.id" class="overflow-hidden">
+                  <template #header>
+                    <div class="flex justify-between items-start">
+                      <h3 class="font-semibold text-gray-900">{{ item.name }}</h3>
                       <UButton 
                         variant="ghost" 
                         color="error" 
@@ -226,32 +147,122 @@ function goBack() {
                         size="sm" 
                         @click="cart.removeFromCart(item.id)"
                       />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Total and Checkout Button -->
-            <div class="mt-8 pt-6 border-t border-gray-200">
-              <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div class="text-center sm:text-right">
-                  <div class="text-sm text-gray-500 mb-1">До сплати</div>
-                  <div class="text-3xl font-bold text-gray-900">{{ cart.totalPrice }} ₴</div>
-                </div>
-                <UButton
-                  color="primary"
-                  size="xl"
-                  class="w-full sm:w-auto px-8"
-                  @click="onCheckout"
-                  :disabled="cart.isEmpty"
-                >
-                  Оформити замовлення
-                  <UIcon name="i-heroicons-arrow-right" class="ml-2" />
-                </UButton>
+                    </div>
+                  </template>
+                  
+                  <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm text-gray-500">Кількість</span>
+                      <div class="flex items-center gap-2">
+                        <UButton 
+                          variant="outline" 
+                          icon="i-heroicons-minus" 
+                          size="xs" 
+                          :disabled="item.quantity <= 1"
+                          @click="cart.changeQuantity(item.id, -1)" 
+                        />
+                        <span class="min-w-[2rem] text-center font-medium">{{ item.quantity }}</span>
+                        <UButton 
+                          variant="outline" 
+                          icon="i-heroicons-plus" 
+                          size="xs" 
+                          @click="cart.changeQuantity(item.id, 1)" 
+                        />
+                      </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-sm text-gray-500">Ціна за одиницю</span>
+                      <span class="font-medium">{{ item.price }} ₴</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t">
+                      <span class="font-semibold">Всього</span>
+                      <span class="font-bold text-lg text-primary-600">{{ item.price * item.quantity }} ₴</span>
+                    </div>
+                  </div>
+                </UCard>
               </div>
-            </div>
-          </template>
+
+              <!-- Desktop Table Layout -->
+              <div class="hidden sm:block overflow-x-auto">
+                <table class="min-w-full">
+                  <thead>
+                    <tr class="border-b border-gray-200">
+                      <th class="px-4 py-3 text-left font-semibold text-gray-900">Товар</th>
+                      <th class="px-4 py-3 text-center font-semibold text-gray-900">Кількість</th>
+                      <th class="px-4 py-3 text-center font-semibold text-gray-900">Ціна за од.</th>
+                      <th class="px-4 py-3 text-center font-semibold text-gray-900">Всього</th>
+                      <th class="px-4 py-3 text-center font-semibold text-gray-900">Дії</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in cart.items" :key="item.id" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                      <td class="px-4 py-4">
+                        <div class="font-medium text-gray-900">{{ item.name }}</div>
+                      </td>
+                      <td class="px-4 py-4 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                          <UButton 
+                            variant="outline" 
+                            icon="i-heroicons-minus" 
+                            size="xs"
+                            :disabled="item.quantity <= 1"
+                            @click="cart.changeQuantity(item.id, -1)" 
+                          />
+                          <span class="min-w-[2rem] font-medium">{{ item.quantity }}</span>
+                          <UButton 
+                            variant="outline" 
+                            icon="i-heroicons-plus" 
+                            size="xs" 
+                            @click="cart.changeQuantity(item.id, 1)" 
+                          />
+                        </div>
+                      </td>
+                      <td class="px-4 py-4 text-center font-medium">{{ item.price }} ₴</td>
+                      <td class="px-4 py-4 text-center font-bold text-primary-600">{{ item.price * item.quantity }} ₴</td>
+                      <td class="px-4 py-4 text-center">
+                        <UButton 
+                          variant="ghost" 
+                          color="error" 
+                          icon="i-heroicons-trash" 
+                          size="sm" 
+                          @click="cart.removeFromCart(item.id)"
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Total and Checkout Button -->
+              <div class="mt-8 pt-6 border-t border-gray-200">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <div class="text-center sm:text-right">
+                    <div class="text-sm text-gray-500 mb-1">До сплати</div>
+                    <div class="text-3xl font-bold text-gray-900">{{ cart.totalPrice }} ₴</div>
+                  </div>
+                  <UButton
+                    color="primary"
+                    size="xl"
+                    class="w-full sm:w-auto px-8"
+                    @click="onCheckout"
+                    :disabled="cart.isEmpty"
+                  >
+                    Оформити замовлення
+                    <UIcon name="i-heroicons-arrow-right" class="ml-2" />
+                  </UButton>
+                </div>
+              </div>
+            </template>
+            <template #fallback>
+              <div class="text-center py-16">
+                <div class="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                  <UIcon name="i-heroicons-arrow-path" class="w-12 h-12 text-gray-400 animate-spin" />
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Завантаження кошика...</h3>
+                <p class="text-gray-500 mb-6">Будь ласка, зачекайте</p>
+              </div>
+            </template>
+          </ClientOnly>
         </div>
 
         <!-- Шаг 2: Форма оформления -->
