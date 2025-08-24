@@ -11,12 +11,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Нет прав' })
   }
 
-  // Получаем текущую дату для расчетов
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
-  const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
-
   // Тестовые данные для дашборда
   return {
     // Статистика заказов

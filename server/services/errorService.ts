@@ -9,6 +9,7 @@ export class AppError extends Error {
    * Додаткові дані, що можуть бути надіслані клієнту.
    * Nitro використовує цю властивість для формування тіла відповіді про помилку.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
 
   constructor(
@@ -41,6 +42,7 @@ export class ValidationError extends AppError {
   constructor(
     message: string,
     /** Об'єкт з деталями помилки валідації. */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public details?: any
   ) {
     super(400, message, 'VALIDATION_ERROR')

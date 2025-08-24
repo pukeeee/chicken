@@ -97,6 +97,7 @@ export function validateQuery<T>(
  * Создание стандартизированного ответа об ошибке валидации
  */
 export function createValidationError(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   validationResult: ValidationResult<any>,
   statusCode: number = 400
 ) {

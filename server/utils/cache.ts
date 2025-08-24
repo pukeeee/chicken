@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Реализация простого кэша в памяти (in-memory cache).
  * Хранит данные в формате ключ-значение с возможностью установки времени жизни (TTL).

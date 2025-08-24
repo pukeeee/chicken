@@ -324,7 +324,15 @@ export const orderSchemas = {
       status: z.enum(Object.values(OrderStatus) as [string, ...string[]]).optional(),
       customerName: nameSchema.optional(),
       customerPhone: phoneSchema.optional(),
+      customerEmail: emailSchema.optional(),
       deliveryAddress: z.string().min(5, 'Адреса доставки має бути детальнішою').optional(),
+      paymentMethod: z.enum(Object.values(PaymentMethod) as [string, ...string[]]).optional(), 
+      items: z.array( // Спрощено
+        z.object({
+          productId: z.number().int().positive(), // ID продукту
+          quantity: z.number().int().min(1), // Кількість
+        })
+      ).optional(),
     })
     .partial()
     .refine((data) => Object.keys(data).length > 0, {

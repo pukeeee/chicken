@@ -74,7 +74,7 @@ export const orderService = {
       return {
         productId: item.productId,
         quantity: item.quantity,
-        price: product.price, // product.price вже є Decimal
+        price: product.price.toNumber(), // Convert Decimal to number
       }
     })
 
@@ -86,7 +86,7 @@ export const orderService = {
       throw new ValidationError('Загальна сума замовлення занадто велика.')
     }
 
-    logger.info({ total: total.toNumber(), itemsCount: itemsWithPrices.length }, 'Загальна вартість розрахована')
+    logger.info({ total: total.toString(), itemsCount: itemsWithPrices.length }, 'Загальна вартість розрахована')
 
     // Крок 5: Виклик репозиторію для створення замовлення в БД.
     // Усі помилки, включаючи помилки БД, будуть перехоплені глобальним обробником.

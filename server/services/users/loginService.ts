@@ -1,3 +1,4 @@
+import { User } from "@prisma/client"
 import { setToken, getUserByPhone, createUser } from "~~/server/repositories/user.repository"
 import { createToken } from '~~/server/utils/jwt'
 
@@ -7,7 +8,7 @@ export const loginService = {
    * @param phone - номер телефона
    * @returns пользователь или null
    */
-  async findUserByPhone(phone: string): Promise<any | null> {
+  async findUserByPhone(phone: string): Promise<User | null> {
     const user = await getUserByPhone(phone)
     
     // console.log(`[DB STUB] Checking user existence for phone: ${phone}`)
@@ -19,7 +20,7 @@ export const loginService = {
    * @param phone - номер телефона
    * @returns созданный пользователь
    */
-  async createUser(phone: string): Promise<any> {
+  async createUser(phone: string): Promise<User> {
     const newUser = await createUser(phone)
 
     // console.log(`[DB STUB] Creating new user for phone: ${phone}`)
@@ -32,7 +33,7 @@ export const loginService = {
    * @param phone - номер телефона
    * @returns пользователь (существующий или новый)
    */
-  async getOrCreateUser(phone: string): Promise<{user: any, token: string}> {
+  async getOrCreateUser(phone: string): Promise<{user: User, token: string}> {
     let user = await this.findUserByPhone(phone)
     
     if (!user) {

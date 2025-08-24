@@ -1,4 +1,5 @@
 import type { Product } from './types'
+// import type { Decimal } from '@prisma/client/runtime/library' // Видалено імпорт Decimal
 
 export interface OrderCustomer {
   id: number
@@ -10,7 +11,7 @@ export interface OrderCustomer {
 export interface OrderItem {
   id: number
   quantity: number
-  price: number
+  price: number // Ціна після десеріалізації JSON є number
   image?: string | null
   product: Product
 }
@@ -22,7 +23,7 @@ export interface Order {
   customerPhone?: string | null
   customerEmail?: string | null
   deliveryAddress?: string | null
-  total: number
+  total: number // Загальна сума після десеріалізації JSON є number
   paymentMethod: string
   createdAt: string
   updatedAt?: string | null
@@ -45,7 +46,7 @@ export interface OrderUpdateData {
   customerPhone?: string | null
   customerEmail?: string | null
   deliveryAddress?: string | null
-  total?: number
+  total?: number // Загальна сума після десеріалізації JSON є number
   paymentMethod?: string
 }
 

@@ -17,6 +17,7 @@ import { ValidationError, NotFoundError, AppError } from '../services/errorServi
  *   handleDatabaseError(e);
  * }
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const handleDatabaseError = (error: any, context?: string) => {
   // Перевіряємо код помилки Prisma.
   // Повний список кодів: https://www.prisma.io/docs/reference/api-reference/error-reference

@@ -11,6 +11,7 @@ import { createLogger } from '../utils/logger'
  *    щоб відповідь була чистою, інформативною та безпечною.
  */
 export default defineNitroPlugin((nitroApp) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   nitroApp.hooks.hook('error', async (error: any, { event }) => {
     if (!event) {
       return

@@ -1,4 +1,3 @@
-import { z } from 'zod'
 import { orderSchemas, type OrderCreateInput } from '~~/shared/validation/schemas'
 import { orderService } from '~~/server/services/users/orderService'
 import { ValidationError, UnauthorizedError } from '~~/server/services/errorService'
@@ -29,7 +28,7 @@ export default defineEventHandler(async (event) => {
   let body: OrderCreateInput
   try {
     body = await readBody<OrderCreateInput>(event)
-  } catch (error) {
+  } catch {
     logger.warn('Невірний формат тіла запиту')
     throw new ValidationError('Невірний формат даних запиту.')
   }
@@ -68,7 +67,7 @@ export default defineEventHandler(async (event) => {
   logger.info({
     orderId: newOrder.id,
     userId: user.id,
-    total: newOrder.total,
+    total: newOrder.total.toString(), // Перетворюємо Decimal на string для логування
   }, 'Замовлення успішно створено в API')
 
   // Крок 6: Повернення очищених даних, необхідних для клієнта.
