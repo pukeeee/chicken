@@ -5,7 +5,7 @@
  * виключно його власну логіку.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { codeService } from './codeService'
+import { codeService } from '~~/server/services/users/codeService'
 import { otpService } from '~~/server/utils/otp'
 import { AppError } from '~~/server/services/errorService'
 

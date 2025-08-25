@@ -25,7 +25,7 @@ vi.mock('redis', () => ({
 }))
 
 describe('otpService', () => {
-  let otpService: typeof import('./otp')['otpService']
+  let otpService: typeof import('~~/server/utils/otp')['otpService']
 
   beforeEach(async () => {
     // Скидаємо стан всіх модулів та моків перед кожним тестом для повної ізоляції
@@ -33,7 +33,7 @@ describe('otpService', () => {
     mockRedisClient = createMockRedisClient()
 
     // Динамічно імпортуємо сервіс, щоб отримати його "чисту" версію для тесту
-    const module = await import('./otp')
+    const module = await import('~~/server/utils/otp')
     otpService = module.otpService
   })
 
