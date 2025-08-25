@@ -1,10 +1,13 @@
 import { otpService } from "~~/server/utils/otp"
+import { AppError } from '~~/server/services/errorService'
+
+const OTP_COOLDOWN_SECONDS = 60 // 1 минута
 
 export const codeService = {
 
   /**
   * Генерирует код из цифр и букв (без I, O, 0)
-  * @param length - длина кода (по умолчанию 4)
+  * @param length - длина кода (по умолчанию 6)
   * @returns сгенерированный код
   */
   generateCode(length: number = 6): string {
@@ -18,14 +21,20 @@ export const codeService = {
   },
 
   /**
-   * Создает и сохраняет код для телефона
+   * Создает и сохраняет код для телефона с ограничением по частоте
    * @param phone - номер телефона
    * @param ttl - время жизни в секундах (по умолчанию 5 минут)
    * @returns сгенерированный код
    */
   async createAndStore(phone: string, ttl: number = 300): Promise<string> {
+    if (await otpService.isLocked(phone)) {
+      throw new AppError(429, 'Повторная отправка возможна через минуту') // 429 Too Many Requests
+    }
+
     const code = this.generateCode()
     await otpService.set(phone, code, ttl)
+    await otpService.setLock(phone, OTP_COOLDOWN_SECONDS)
+    
     return code
   },
 
