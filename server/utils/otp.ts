@@ -35,5 +35,18 @@ export const otpService = {
     await initRedis()
     const code = await client.get(`otp:${key}`)
     return code === input
+  },
+
+  // Установить блокировку
+  async setLock(key: string, ttl: number) {
+    await initRedis()
+    await client.set(`otp_lock:${key}`, 'locked', { EX: ttl })
+  },
+
+  // Проверить наличие блокировки
+  async isLocked(key: string): Promise<boolean> {
+    await initRedis()
+    const result = await client.exists(`otp_lock:${key}`)
+    return result === 1
   }
 }

@@ -23,8 +23,7 @@ logs
 # .env.*
 !.env.example
 
-/prisma/migrations
-
 docs
 GEMINI.md
 QWEN.md
+UNIT_TEST_PLAN.md
