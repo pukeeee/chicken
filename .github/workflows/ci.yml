@@ -1,0 +1,42 @@
+# Назва нашого процесу, яка буде відображатись у GitHub
+name: Run Unit Tests
+
+# Тригери: коли запускати цей процес
+on:
+  # Запускати на кожен push в будь-яку гілку
+  push:
+  # Запускати при створенні або оновленні pull request на гілку main
+  pull_request:
+    branches: [ "main" ]
+
+# Задачі, які потрібно виконати
+jobs:
+  # Назва задачі (може бути будь-яка)
+  test:
+    # Вказуємо, що задача має виконуватись на віртуальній машині з Ubuntu
+    runs-on: ubuntu-latest
+
+    # Кроки, які будуть виконані послідовно
+    steps:
+      # Крок 1: Завантажуємо код з репозиторію
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Крок 2: Встановлюємо потрібну версію Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm' # Вмикаємо кешування для npm, щоб прискорити майбутні запуски
+
+      # Крок 3: Встановлюємо залежності (швидкий та надійний спосіб для CI)
+      - name: Install Dependencies
+        run: npm ci
+
+      # Крок 4: Запускаємо юніт-тести
+      - name: Run Unit Tests
+        run: npm run test
+
+      # Крок 5: Перевіряємо, що проєкт успішно збирається
+      - name: Build Application
+        run: npm run build

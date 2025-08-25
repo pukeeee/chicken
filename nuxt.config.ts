@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
@@ -8,7 +9,8 @@ export default defineNuxtConfig({
   sourcemap: false,
   modules: [
     '@pinia/nuxt',
-    '@nuxt/ui'
+    '@nuxt/ui',
+    '@nuxt/test-utils/module'
   ],
   ssr: true,
   pinia: {
