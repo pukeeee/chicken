@@ -47,21 +47,21 @@ jobs:
       - name: Send Telegram message on success (Pull Request)
         if: success() && github.event_name == 'pull_request'
         run: |
-          TEXT="✅ *Тести пройшли успішно!*\n\n          PR: *#${{ github.event.pull_request.number }}*\n          Репозиторій: *${{ github.repository }}*\n\n          [Перейти до PR](${{ github.event.pull_request.html_url }})"
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-          --data-urlencode "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
-          --data-urlencode "text=${TEXT}" \
-          --data-urlencode "parse_mode=Markdown"
+          MESSAGE="✅ *Тести пройшли успішно!*%0A%0APR: *#${{ github.event.pull_request.number }}*%0AРепозиторій: *${{ github.repository }}*%0A%0A[Перейти до PR](${{ github.event.pull_request.html_url }})"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="$MESSAGE" \
+            -d parse_mode="Markdown"
 
       # Крок 7: Сповіщення про помилку (для PR)
       - name: Send Telegram message on failure (Pull Request)
         if: failure() && github.event_name == 'pull_request'
         run: |
-          TEXT="❌ *Тести провалено!*\n\n          PR: *#${{ github.event.pull_request.number }}*\n          Репозиторій: *${{ github.repository }}*\n\n          [Перейти до логів](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-          --data-urlencode "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
-          --data-urlencode "text=${TEXT}" \
-          --data-urlencode "parse_mode=Markdown"
+          MESSAGE="❌ *Тести провалено!*%0A%0APR: *#${{ github.event.pull_request.number }}*%0AРепозиторій: *${{ github.repository }}*%0A%0A[Перейти до логів](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="$MESSAGE" \
+            -d parse_mode="Markdown"
 
       # Крок 8: Сповіщення про помилку (для коммітів в master)
       - name: Send Telegram message on failure (Push to master)
@@ -70,12 +70,13 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
         run: |
           SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
-          TEXT="❌ *Збірка на гілці 'master' провалилася!*\n\n          Репозиторій: *${{ github.repository }}*\n          Комміт: 
-          $SHORT_SHA`*\n\n          [Перейти до логів](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-          --data-urlencode "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
-          --data-urlencode "text=${TEXT}" \
-          --data-urlencode "parse_mode=Markdown"
+          MESSAGE="❌ *Збірка на гілці 'master' провалилася!*%0A%0AРепозиторій: *${{ github.repository }}*%0AКомміт: 
+          $SHORT_SHA
+          %0A%0A[Перейти до логів](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="$MESSAGE" \
+            -d parse_mode="Markdown"
 
   automerge:
     name: Automerge
@@ -94,4 +95,3 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           MERGE_METHOD: "squash"
-          DELETE_BRANCH: "true"
