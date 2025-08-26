@@ -75,3 +75,19 @@ jobs:
           --data-urlencode "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
           --data-urlencode "text=${TEXT}" \
           --data-urlencode "parse_mode=Markdown"
+
+  automerge:
+    name: Automerge
+    needs: test
+    runs-on: ubuntu-latest
+    if: |
+      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.draft == false &&
+      contains(github.event.pull_request.labels.*.name, 'automerge')
+    steps:
+      - name: Merge PR
+        uses: pascalgn/automerge-action@v0.16.3
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          MERGE_METHOD: "squash"
+          DELETE_BRANCH: "true"
