@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # --- Налаштування ---
 BASE_BRANCH="master"
 AUTOMEGE_LABEL="automerge"
@@ -17,8 +19,9 @@ fi
 PR_TITLE=$(git log "$BASE_BRANCH..HEAD" --reverse --pretty=format:"%s" | head -n 1)
 
 # 4. Генеруємо тіло для PR зі списком всіх коммітів
-COMMIT_LIST=$(git log "$BASE_BRANCH..HEAD" --pretty=format:"- %s")
-PR_BODY="### Зміни в цьому PR:\n\n$COMMIT_LIST\n---\n*PR створено та заповнено автоматично."
+# %n в кінці формату додає перенос рядка після кожного комміту
+COMMIT_LIST=$(git log "$BASE_BRANCH..HEAD" --pretty=format:"- %s%n")
+PR_BODY="### Зміни в цьому PR:\n\n${COMMIT_LIST}---\n*PR створено та заповнено автоматично."
 
 echo "Створюю Pull Request..."
 echo "======================="
