@@ -70,7 +70,8 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
         run: |
           SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
-          TEXT="❌ *Збірка на гілці 'master' провалилася!*\n\n          Репозиторій: *${{ github.repository }}*\n          Комміт: `$SHORT_SHA`*\n\n          [Перейти до логів](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          TEXT="❌ *Збірка на гілці 'master' провалилася!*\n\n          Репозиторій: *${{ github.repository }}*\n          Комміт: 
+          $SHORT_SHA`*\n\n          [Перейти до логів](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
           --data-urlencode "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
           --data-urlencode "text=${TEXT}" \
@@ -80,6 +81,9 @@ jobs:
     name: Automerge
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     if: |
       github.actor != 'dependabot[bot]' &&
       github.event.pull_request.draft == false &&
