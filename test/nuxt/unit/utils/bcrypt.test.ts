@@ -8,6 +8,9 @@ import { describe, it, expect, vi, type Mock, beforeEach } from 'vitest'
 import bcrypt from 'bcrypt'
 import { hash, compare } from '~~/server/utils/bcrypt'
 
+// Встановлюємо змінну оточення для тесту
+process.env.BCRYPT_SALT_ROUNDS = '10'
+
 // Мокаємо бібліотеку bcrypt
 vi.mock('bcrypt', () => ({
   // `default` потрібен, оскільки ми імпортуємо bcrypt через `import bcrypt from 'bcrypt'`
