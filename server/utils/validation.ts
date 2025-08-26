@@ -1,5 +1,10 @@
 import { z } from 'zod'
 import type { H3Event } from 'h3'
+import { 
+  readBody as defaultReadBody,
+  getQuery as defaultGetQuery,
+  createError as defaultCreateError
+} from 'h3'
 
 /**
  * Результат валидации
@@ -7,7 +12,7 @@ import type { H3Event } from 'h3'
 export interface ValidationResult<T> {
   success: boolean
   data?: T
-  errors?: Record<string, string[]>
+  errors?: Record<string, string[]> 
   message?: string
 }
 
@@ -16,7 +21,8 @@ export interface ValidationResult<T> {
  */
 export async function validateBody<T>(
   event: H3Event,
-  schema: z.ZodSchema<T>
+  schema: z.ZodSchema<T>,
+  readBody = defaultReadBody
 ): Promise<ValidationResult<T>> {
   try {
     const body = await readBody(event)
@@ -57,7 +63,8 @@ export async function validateBody<T>(
  */
 export function validateQuery<T>(
   event: H3Event,
-  schema: z.ZodSchema<T>
+  schema: z.ZodSchema<T>,
+  getQuery = defaultGetQuery
 ): ValidationResult<T> {
   try {
     const query = getQuery(event)
@@ -99,7 +106,8 @@ export function validateQuery<T>(
 export function createValidationError(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   validationResult: ValidationResult<any>,
-  statusCode: number = 400
+  statusCode: number = 400,
+  createError = defaultCreateError
 ) {
   return createError({
     statusCode,

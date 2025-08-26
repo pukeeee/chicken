@@ -24,11 +24,11 @@ vi.mock('redis', () => ({
   createClient: vi.fn(() => mockRedisClient)
 }))
 
-describe('otpService', () => {
+describe('otpService - сервіс для одноразових паролів', () => {
   let otpService: typeof import('~~/server/utils/otp')['otpService']
 
+  // Перед кожним тестом скидаємо стан всіх модулів та моків для повної ізоляції.
   beforeEach(async () => {
-    // Скидаємо стан всіх модулів та моків перед кожним тестом для повної ізоляції
     vi.resetModules()
     mockRedisClient = createMockRedisClient()
 
@@ -69,8 +69,7 @@ describe('otpService', () => {
     })
 
     it('(Позитивний) Має викликати connect лише один раз при повторних викликах', async () => {
-      // Arrange
-      // Act
+      // Arrange & Act
       await otpService.set('user1', '111')
       await otpService.set('user2', '222')
 
@@ -79,7 +78,7 @@ describe('otpService', () => {
     })
   })
 
-  describe('get - Отримання OTP', () => {
+  describe('get - Отримання та видалення OTP', () => {
     it('(Позитивний) Має повернути код і видалити його, якщо він існує', async () => {
       // Arrange
       const key = 'get_user'
@@ -111,7 +110,7 @@ describe('otpService', () => {
     })
   })
 
-  describe('verify - Верифікація OTP', () => {
+  describe('verify - Верифікація OTP без видалення', () => {
     it('(Позитивний) Має повернути true, якщо коди співпадають', async () => {
       // Arrange
       const key = 'verify_user'
@@ -165,7 +164,7 @@ describe('otpService', () => {
     })
   })
 
-  describe('setLock - Встановлення блокування', () => {
+  describe('setLock - Встановлення блокування повторного відправлення', () => {
     it('(Позитивний) Має встановити ключ блокування з правильним префіксом і TTL', async () => {
       // Arrange
       const key = 'lock_user'
@@ -180,7 +179,7 @@ describe('otpService', () => {
     })
   })
 
-  describe('isLocked - Перевірка блокування', () => {
+  describe('isLocked - Перевірка блокування повторного відправлення', () => {
     it('(Позитивний) Має повернути true, якщо ключ блокування існує', async () => {
       // Arrange
       const key = 'locked_user'

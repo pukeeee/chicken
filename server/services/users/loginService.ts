@@ -37,10 +37,7 @@ export const loginService = {
     let user = await this.findUserByPhone(phone)
     
     if (!user) {
-      console.log(`User not found for phone ${phone}, creating new user`)
       user = await this.createUser(phone)
-    } else {
-      console.log(`Existing user found for phone ${phone}`)
     }
 
     // Генерируем JWT токен
