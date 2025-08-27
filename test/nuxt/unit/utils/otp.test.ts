@@ -37,6 +37,16 @@ describe('otpService - сервіс для одноразових паролів
     otpService = module.otpService
   })
 
+  describe('connect - підключення до Redis', () => {
+    it('Позитивний) Має обробляти помилки підключення до Redis', async () => {
+      // Arrange
+      mockRedisClient.connect.mockRejectedValue(new Error('Connection failed'))
+      
+      // Assert
+      await expect(otpService.set('key', 'code')).rejects.toThrow('Connection failed')
+    })
+  })
+
   describe('set - Збереження OTP', () => {
     it('(Позитивний) Має зберегти код з TTL за замовчуванням (300с)', async () => {
       // Arrange
@@ -75,6 +85,11 @@ describe('otpService - сервіс для одноразових паролів
 
       // Assert
       expect(mockRedisClient.connect).toHaveBeenCalledOnce()
+    })
+
+    it('Має використовувати правильний префікс для OTP', async () => {
+      await otpService.set('user123', 'code456')
+      expect(mockRedisClient.set).toHaveBeenCalledWith('otp:user123', 'code456', { EX: 300 })
     })
   })
 
@@ -176,6 +191,14 @@ describe('otpService - сервіс для одноразових паролів
       // Assert
       expect(mockRedisClient.set).toHaveBeenCalledOnce()
       expect(mockRedisClient.set).toHaveBeenCalledWith(`otp_lock:${key}`, 'locked', { EX: ttl })
+    })
+
+    it('Має використовувати правильний префікс для блокування', async () => {
+      // Arrange
+      await otpService.setLock('user123', 60)
+      
+      // Assert
+      expect(mockRedisClient.set).toHaveBeenCalledWith('otp_lock:user123', 'locked', { EX: 60 })
     })
   })
 
