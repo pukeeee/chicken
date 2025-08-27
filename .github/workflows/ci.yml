@@ -3,9 +3,10 @@ name: Run Unit Tests
 
 # Тригери: коли запускати цей процес
 on:
-  # Запускати на кожен push в будь-яку гілку
+  # Запускати на кожен push в гілку master
   push:
-  # Запускати при створенні або оновлення pull request на гілку main
+    branches: [ "master" ]
+  # Запускати при створенні або оновлення pull request на гілку master
   pull_request:
     branches: [ "master" ]
 
@@ -86,6 +87,7 @@ jobs:
       contents: write
       pull-requests: write
     if: |
+      github.event_name == 'pull_request' &&
       github.actor != 'dependabot[bot]' &&
       github.event.pull_request.draft == false &&
       contains(github.event.pull_request.labels.*.name, 'automerge')
