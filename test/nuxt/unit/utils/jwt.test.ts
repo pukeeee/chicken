@@ -5,7 +5,7 @@
  * від внутрішньої реалізації `jsonwebtoken`.
  */
 import { describe, it, expect, vi, type Mock, beforeEach } from 'vitest'
-import jwt, { JsonWebTokenError } from 'jsonwebtoken'
+import jwt, { JsonWebTokenError, TokenExpiredError, NotBeforeError } from 'jsonwebtoken'
 import { createToken, verifyToken } from '~~/server/utils/jwt'
 
 // Мокаємо бібліотеку jsonwebtoken
@@ -21,6 +21,18 @@ vi.mock('jsonwebtoken', () => ({
       super(message)
       this.name = 'JsonWebTokenError'
     }
+  },
+  TokenExpiredError: class extends Error {
+    expiredAt: Date;
+    constructor(message: string, expiredAt: Date) { 
+      super(message); this.name = 'TokenExpiredError'; this.expiredAt = expiredAt 
+    }
+  },
+  NotBeforeError: class extends Error {
+    date: Date
+    constructor(message: string, date: Date) { 
+      super(message); this.name = 'NotBeforeError'; this.date = date 
+    }
   }
 }))
 
@@ -31,9 +43,9 @@ const mockedJwt = jwt as unknown as {
 }
 
 describe('jwt утиліти', () => {
-  // Перед кожним тестом очищуємо історію викликів всіх моків
+  // Скидаємо всі моки перед кожним тестом для чистого середовища
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
   })
 
   const secret = process.env.JWT_SECRET || 'secret'
@@ -132,4 +144,255 @@ describe('jwt утиліти', () => {
       expect(mockedJwt.verify).toHaveBeenCalledWith('', secret)
     })
   })
+
+  describe('createToken - Безпека та граничні випадки', () => {
+    it('(Позитивний) Має працювати з різними типами payload', () => {
+      const payloads = [
+        { userId: 1 },
+        'simple-string',
+        Buffer.from('buffer-data'),
+        { complex: { nested: { object: 'value' } } },
+        { array: [1, 2, 3] },
+        { nullField: null, undefinedField: undefined },
+      ]
+
+      payloads.forEach(payload => {
+        mockedJwt.sign.mockReturnValue('token')
+        
+        const result = createToken(payload)
+        
+        expect(mockedJwt.sign).toHaveBeenCalledWith(
+          payload,
+          process.env.JWT_SECRET || 'secret',
+          { expiresIn: '1d' }
+        )
+        expect(result).toBe('token')
+      })
+    })
+
+    it('(Позитивний) Має обробляти різні формати expiresIn', () => {
+      const expiresInFormats: (jwt.SignOptions['expiresIn'])[] = [
+        '1d', '7d', '30d',
+        '1h', '24h', '168h',
+        '3600s', '86400s',
+        60, 3600, 86400, // числа (секунди)
+        '1y', '1M', '1w'
+      ]
+
+      expiresInFormats.forEach(expiresIn => {
+        mockedJwt.sign.mockReturnValue('token')
+        
+        createToken({ test: true }, expiresIn)
+        
+        expect(mockedJwt.sign).toHaveBeenCalledWith(
+          { test: true },
+          expect.any(String),
+          { expiresIn }
+        )
+      })
+    })
+
+    it('(Позитивний) Має обробляти порожній або відсутній секрет', () => {
+      const originalSecret = process.env.JWT_SECRET
+      
+      // Тест з порожнім секретом
+      process.env.JWT_SECRET = ''
+      mockedJwt.sign.mockReturnValue('token-empty-secret')
+      
+      createToken({ test: true })
+      expect(mockedJwt.sign).toHaveBeenCalledWith(
+        { test: true }, 
+        'secret', // резервний варіант
+        { expiresIn: '1d' }
+      )
+      
+      // Тест з відсутнім секретом
+      delete process.env.JWT_SECRET
+      mockedJwt.sign.mockReturnValue('token-no-secret')
+      
+      createToken({ test: true })
+      expect(mockedJwt.sign).toHaveBeenCalledWith(
+        { test: true }, 
+        'secret', // резервний варіант
+        { expiresIn: '1d' }
+      )
+      
+      // Відновлення
+      process.env.JWT_SECRET = originalSecret
+    })
+  })
+
+  describe('verifyToken - Різні типи помилок JWT', () => {
+    it('(Негативний) Має обробляти всі стандартні типи помилок JWT', () => {
+      const jwtErrors = [
+        new JsonWebTokenError('invalid signature'),
+        new JsonWebTokenError('jwt malformed'),
+        new JsonWebTokenError('jwt signature is required'),
+        new TokenExpiredError('jwt expired', new Date()),
+        new NotBeforeError('jwt not active', new Date()),
+        new JsonWebTokenError('invalid token')
+      ]
+
+      jwtErrors.forEach(error => {
+        mockedJwt.verify.mockImplementation(() => { throw error })
+        
+        expect(() => verifyToken('invalid-token')).toThrow(error)
+        expect(mockedJwt.verify).toHaveBeenCalledWith('invalid-token', expect.any(String))
+      })
+    })
+
+    it('(Позитивний) Має повертати різні типи розкодованого payload', () => {
+      const payloads = [
+        { userId: 1, role: 'admin' },
+        'string-payload',
+        { exp: Math.floor(Date.now() / 1000) + 3600 },
+        { iss: 'test-issuer', sub: 'user-123', aud: 'test-app' }
+      ]
+
+      payloads.forEach(payload => {
+        mockedJwt.verify.mockReturnValue(payload)
+        
+        const result = verifyToken('valid-token')
+        
+        expect(result).toEqual(payload)
+      })
+    })
+
+    it('(Негативний) Має обробляти граничні випадки токенів', () => {
+      const edgeCaseTokens = [
+        '', // порожній токен
+        '   ', // тільки пробіли
+        'a', // дуже короткий
+        'x'.repeat(10000), // дуже довгий
+        'invalid.token.format',
+        'header.payload', // неповний JWT
+        'header.payload.signature.extra', // забагато частин
+        'тест-токен з юнікодом',
+        'token\nwith\nnewlines', // Тут було неправильне екранування, виправлено на \n
+        'token with spaces'
+      ]
+
+      edgeCaseTokens.forEach(token => {
+        const error = new JsonWebTokenError(`Invalid token: ${token}`)
+        mockedJwt.verify.mockImplementation(() => { throw error })
+        
+        expect(() => verifyToken(token)).toThrow(error)
+      })
+    })
+
+    it('(Позитивний) Має обробляти токени з різними алгоритмами підпису', () => {
+      // Симулюємо токени, створені з різними алгоритмами
+      const algorithmsPayloads = [
+        { alg: 'HS256', data: 'test' },
+        { alg: 'HS384', data: 'test' },
+        { alg: 'HS512', data: 'test' },
+        { alg: 'RS256', data: 'test' },
+        { alg: 'none', data: 'test' } // небезпечний алгоритм
+      ]
+
+      algorithmsPayloads.forEach(payload => {
+        mockedJwt.verify.mockReturnValue(payload)
+        
+        const result = verifyToken('token-with-algorithm')
+        
+        expect(result).toEqual(payload)
+      })
+    })
+  })
+
+  describe('Продуктивність та стрес-тести', () => {
+    it('(Позитивний) Має швидко створювати велику кількість токенів', () => {
+      mockedJwt.sign.mockImplementation(() => 'fast-token')
+      
+      const start = performance.now()
+      
+      for (let i = 0; i < 10000; i++) {
+        createToken({ id: i })
+      }
+      
+      const end = performance.now()
+      const duration = end - start
+      
+      // Має виконуватись менш ніж за 1 секунду
+      expect(duration).toBeLessThan(1000)
+    })
+
+    it('(Позитивний) Має обробляти паралельні операції', async () => {
+      mockedJwt.sign.mockImplementation((payload) => `token-${JSON.stringify(payload)}`)
+      mockedJwt.verify.mockImplementation((token) => ({ token }))
+      
+      const operations = Array.from({ length: 1000 }, (_, i) => {
+        const payload = { id: i }
+        const token = createToken(payload)
+        return verifyToken(token)
+      })
+      
+      const results = await Promise.all(operations.map(op => Promise.resolve(op)))
+      
+      expect(results).toHaveLength(1000)
+    })
+
+    it('(Позитивний) Має працювати з дуже великими payload', () => {
+      const largePayload = {
+        user: {
+          id: 1,
+          permissions: Array.from({ length: 1000 }, (_, i) => `permission_${i}`),
+          metadata: {
+            largeField: 'x'.repeat(10000),
+            nestedData: Array.from({ length: 100 }, (_, i) => ({
+              id: i,
+              data: 'data'.repeat(100)
+            }))
+          }
+        }
+      }
+
+      mockedJwt.sign.mockReturnValue('large-token')
+      mockedJwt.verify.mockReturnValue(largePayload)
+      
+      const token = createToken(largePayload)
+      const decoded = verifyToken(token)
+      
+      expect(decoded).toEqual(largePayload)
+    })
+  })
+
+  describe('Безпека JWT', () => {
+    it('(Позитивний) Має коректно обробляти потенційно шкідливий payload, не падаючи', () => {
+      const maliciousPayloads = [
+        { __proto__: { isAdmin: true } } as unknown as Record<string, unknown>,
+        { constructor: { prototype: { isAdmin: true } } } as unknown as Record<string, unknown>,
+        { 'role': "admin", "fake'": 'value' } as unknown as Record<string, unknown>, // JSON injection attempt
+        { eval: 'malicious code' } as unknown as Record<string, unknown>,
+        { script: '<script>alert("xss")</script>' } as unknown as Record<string, unknown>
+      ]
+
+      maliciousPayloads.forEach(payload => {
+        mockedJwt.verify.mockReturnValue(payload)
+        
+        // Верифікація має пройти (фільтрація - відповідальність програми)
+        const result = verifyToken('malicious-token')
+        expect(result).toEqual(payload)
+      })
+    })
+
+    it('(Позитивний) Має коректно обробляти токени з критичними claims (exp, nbf, iss)', () => {
+      const criticalClaims = [
+        { exp: Math.floor(Date.now() / 1000) - 3600 }, // термін дії минув
+        { nbf: Math.floor(Date.now() / 1000) + 3600 }, // ще не активний
+        { iss: 'malicious-issuer' },
+        { aud: ['wrong', 'audience'] },
+        { sub: null },
+        { jti: 'duplicate-id' }
+      ]
+
+      criticalClaims.forEach(claims => {
+        mockedJwt.verify.mockReturnValue(claims)
+        
+        const result = verifyToken('token-with-claims')
+        expect(result).toEqual(claims)
+      })
+    })
+  })
+
 })
