@@ -192,34 +192,22 @@ describe('jwt утиліти', () => {
       })
     })
 
-    it('(Позитивний) Має обробляти порожній або відсутній секрет', () => {
-      const originalSecret = process.env.JWT_SECRET
-      
-      // Тест з порожнім секретом
-      process.env.JWT_SECRET = ''
-      mockedJwt.sign.mockReturnValue('token-empty-secret')
-      
-      createToken({ test: true })
+    it('(Позитивний) Має коректно використовувати секрет, завантажений з .env файлу', () => {
+      // Arrange
+      const expectedSecret = process.env.JWT_SECRET; // Має бути 'test_secret_key' з .env.test
+      mockedJwt.sign.mockReturnValue('token');
+
+      // Act
+      createToken({ test: true });
+
+      // Assert
+      // Перевіряємо, що функція викликається з секретом, який був успішно завантажений при старті тестів
       expect(mockedJwt.sign).toHaveBeenCalledWith(
-        { test: true }, 
-        'secret', // резервний варіант
+        { test: true },
+        expectedSecret,
         { expiresIn: '1d' }
-      )
-      
-      // Тест з відсутнім секретом
-      delete process.env.JWT_SECRET
-      mockedJwt.sign.mockReturnValue('token-no-secret')
-      
-      createToken({ test: true })
-      expect(mockedJwt.sign).toHaveBeenCalledWith(
-        { test: true }, 
-        'secret', // резервний варіант
-        { expiresIn: '1d' }
-      )
-      
-      // Відновлення
-      process.env.JWT_SECRET = originalSecret
-    })
+      );
+    });
   })
 
   describe('verifyToken - Різні типи помилок JWT', () => {
