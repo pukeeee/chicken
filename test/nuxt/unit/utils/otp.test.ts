@@ -38,7 +38,7 @@ describe('otpService - сервіс для одноразових паролів
   })
 
   describe('connect - підключення до Redis', () => {
-    it('Позитивний) Має обробляти помилки підключення до Redis', async () => {
+    it('(Негативний) Має обробляти помилки підключення до Redis', async () => {
       // Arrange
       mockRedisClient.connect.mockRejectedValue(new Error('Connection failed'))
       
@@ -87,7 +87,7 @@ describe('otpService - сервіс для одноразових паролів
       expect(mockRedisClient.connect).toHaveBeenCalledOnce()
     })
 
-    it('Має використовувати правильний префікс для OTP', async () => {
+    it('(Позитивний) Має використовувати правильний префікс для OTP', async () => {
       await otpService.set('user123', 'code456')
       expect(mockRedisClient.set).toHaveBeenCalledWith('otp:user123', 'code456', { EX: 300 })
     })
@@ -193,7 +193,7 @@ describe('otpService - сервіс для одноразових паролів
       expect(mockRedisClient.set).toHaveBeenCalledWith(`otp_lock:${key}`, 'locked', { EX: ttl })
     })
 
-    it('Має використовувати правильний префікс для блокування', async () => {
+    it('(Позитивний) Має використовувати правильний префікс для блокування', async () => {
       // Arrange
       await otpService.setLock('user123', 60)
       
@@ -229,6 +229,253 @@ describe('otpService - сервіс для одноразових паролів
       expect(result).toBe(false)
       expect(mockRedisClient.exists).toHaveBeenCalledOnce()
       expect(mockRedisClient.exists).toHaveBeenCalledWith(`otp_lock:${key}`)
+    })
+  })
+
+  describe('Обробка помилок Redis', () => {
+    it('(Негативний) Має обробляти помилки підключення', async () => {
+      mockRedisClient.connect.mockRejectedValue(new Error('Connection refused'))
+      
+      await expect(otpService.set('test', '123')).rejects.toThrow('Connection refused')
+    })
+
+    it('(Негативний) Має обробляти помилки запису', async () => {
+      mockRedisClient.set.mockRejectedValue(new Error('Write error'))
+      
+      await expect(otpService.set('test', '123')).rejects.toThrow('Write error')
+    })
+
+    it('(Негативний) Має обробляти помилки читання', async () => {
+      mockRedisClient.get.mockRejectedValue(new Error('Read error'))
+      
+      await expect(otpService.get('test')).rejects.toThrow('Read error')
+    })
+
+    it('(Негативний) Має обробляти таймаути операцій Redis', async () => {
+      const timeoutError = new Error('Operation timeout')
+      timeoutError.name = 'TimeoutError'
+      
+      mockRedisClient.set.mockRejectedValue(timeoutError)
+      
+      await expect(otpService.set('test', '123')).rejects.toThrow('Operation timeout')
+    })
+  })
+
+  describe('Граничні випадки та валідація', () => {
+    it('(Позитивний) Має працювати з різними форматами ключів', async () => {
+      const edgeKeys = [
+        '',
+        '   ',
+        'key-with-special-chars!@#$%',
+        'key:with:colons',
+        'very_long_key_' + 'x'.repeat(1000),
+        'ключ-на-кириллице',
+        'key\nwith\nnewlines',
+        '123456789'
+      ]
+
+      for (const key of edgeKeys) {
+        await otpService.set(key, 'test-code')
+        expect(mockRedisClient.set).toHaveBeenCalledWith(
+          `otp:${key}`,
+          'test-code',
+          { EX: 300 }
+        )
+      }
+    })
+
+    it('(Позитивний) Має працювати з різними форматами кодів', async () => {
+      const edgeCodes = [
+        '',
+        '   ',
+        'very-long-code-' + 'x'.repeat(1000),
+        'код-кириллицей',
+        'code\nwith\nnewlines',
+        'code with spaces',
+        '!@#$%^&*()',
+        JSON.stringify({ fake: 'object' })
+      ]
+
+      for (const code of edgeCodes) {
+        await otpService.set('test-key', code)
+        expect(mockRedisClient.set).toHaveBeenCalledWith(
+          'otp:test-key',
+          code,
+          { EX: 300 }
+        )
+      }
+    })
+
+    it('(Позитивний) Має обробляти екстремальні значення TTL', async () => {
+      const ttlValues = [
+        1, // мінімум
+        0, // граничний випадок
+        -1, // від'ємне значення
+        Number.MAX_SAFE_INTEGER, // максимум
+        3.14, // дробове число
+        Infinity,
+        -Infinity,
+        NaN
+      ]
+
+      for (const ttl of ttlValues) {
+        if (isNaN(ttl) || !isFinite(ttl) || ttl < 0) {
+          // Redis має відхиляти некоректні TTL
+          mockRedisClient.set.mockRejectedValue(new Error('Invalid TTL'))
+          await expect(otpService.set('test', 'code', ttl)).rejects.toThrow('Invalid TTL')
+        } else {
+          mockRedisClient.set.mockResolvedValue(undefined)
+          await otpService.set('test', 'code', ttl)
+          expect(mockRedisClient.set).toHaveBeenCalledWith('otp:test', 'code', { EX: ttl })
+        }
+        
+        vi.clearAllMocks() // Очищуємо моки всередині циклу для чистоти перевірки
+      }
+    })
+  })
+
+  describe('Стан підключення та відновлення', () => {
+    it('(Позитивний) Має повторно використовувати існуюче підключення', async () => {
+      // Перший виклик
+      await otpService.set('key1', 'code1')
+      expect(mockRedisClient.connect).toHaveBeenCalledOnce()
+      
+      // Другий виклик не має викликати connect знову
+      await otpService.set('key2', 'code2')
+      expect(mockRedisClient.connect).toHaveBeenCalledOnce()
+      
+      // Третій виклик іншого методу
+      await otpService.get('key1')
+      expect(mockRedisClient.connect).toHaveBeenCalledOnce()
+    })
+
+    it('(Негативний) Має обробляти втрату з\'єднання', async () => {
+      // Перше підключення успішне
+      await otpService.set('key1', 'code1')
+      
+      // Симулюємо втрату з'єднання
+      mockRedisClient.set.mockRejectedValue(new Error('Connection lost'))
+      
+      await expect(otpService.set('key2', 'code2')).rejects.toThrow('Connection lost')
+    })
+  })
+
+  describe('Продуктивність та конкуренція', () => {
+    it('(Позитивний) Має обробляти множинні паралельні операції', async () => {
+      const operations = Array.from({ length: 100 }, (_, i) => 
+        otpService.set(`key${i}`, `code${i}`)
+      )
+      
+      await Promise.all(operations)
+      
+      expect(mockRedisClient.set).toHaveBeenCalledTimes(100)
+      expect(mockRedisClient.connect).toHaveBeenCalledOnce()
+    })
+
+    it('(Позитивний) Має обробляти змішані операції паралельно', async () => {
+      const mixedOps = [
+        () => otpService.set('key1', 'code1'),
+        () => otpService.get('key1'),
+        () => otpService.verify('key1', 'code1'),
+        () => otpService.setLock('key1', 60),
+        () => otpService.isLocked('key1')
+      ]
+
+      const promises = mixedOps.map(op => op())
+      await Promise.allSettled(promises)
+      
+      expect(mockRedisClient.connect).toHaveBeenCalledOnce()
+    })
+
+    it('(Позитивний) Має швидко виконувати операції в циклі', async () => {
+      const start = performance.now()
+      
+      for (let i = 0; i < 1000; i++) {
+        await otpService.set(`key${i}`, `code${i}`)
+      }
+      
+      const end = performance.now()
+      const duration = end - start
+      
+      // Перевіряємо, що операції виконуються швидко
+      expect(duration).toBeLessThan(1000) // менше 1 секунди для 1000 операцій
+    })
+  })
+
+  describe('Семантика одноразових кодів', () => {
+    it('(Позитивний) get має видаляти код тільки при успішному отриманні', async () => {
+      // Код існує
+      mockRedisClient.get.mockResolvedValue('123456')
+      
+      const result = await otpService.get('test-key')
+      
+      expect(result).toBe('123456')
+      expect(mockRedisClient.del).toHaveBeenCalledWith('otp:test-key')
+    })
+
+    it('(Негативний) get не має видаляти неіснуючий код', async () => {
+      mockRedisClient.get.mockResolvedValue(null)
+      
+      const result = await otpService.get('non-existent')
+      
+      expect(result).toBeNull()
+      expect(mockRedisClient.del).not.toHaveBeenCalled()
+    })
+
+    it('(Позитивний) verify не має видаляти код при перевірці', async () => {
+      mockRedisClient.get.mockResolvedValue('123456')
+      
+      const result = await otpService.verify('test-key', '123456')
+      
+      expect(result).toBe(true)
+      expect(mockRedisClient.del).not.toHaveBeenCalled()
+    })
+
+    it('(Позитивний) Має коректно обробляти race condition в get', async () => {
+      // Симулюємо ситуацію, коли між get та del код видаляється
+      let getCallCount = 0
+      mockRedisClient.get.mockImplementation(() => {
+        getCallCount++
+        return Promise.resolve(getCallCount === 1 ? '123456' : null)
+      })
+      
+      mockRedisClient.del.mockResolvedValue(0) // код вже було видалено
+      
+      const result = await otpService.get('racy-key')
+      
+      expect(result).toBe('123456')
+      expect(mockRedisClient.del).toHaveBeenCalled()
+    })
+  })
+
+  describe('Блокування повторного відправлення', () => {
+    it('(Позитивний) Має правильно керувати життєвим циклом блокування', async () => {
+      // Встановлюємо блокування
+      await otpService.setLock('user123', 60)
+      expect(mockRedisClient.set).toHaveBeenCalledWith('otp_lock:user123', 'locked', { EX: 60 })
+      
+      // Перевіряємо блокування
+      mockRedisClient.exists.mockResolvedValue(1)
+      const isLocked = await otpService.isLocked('user123')
+      expect(isLocked).toBe(true)
+      
+      // Блокування закінчується
+      mockRedisClient.exists.mockResolvedValue(0)
+      const isStillLocked = await otpService.isLocked('user123')
+      expect(isStillLocked).toBe(false)
+    })
+
+    it('(Позитивний) Має обробляти різний час блокування', async () => {
+      const lockTimes = [1, 60, 300, 3600, 86400]
+      
+      for (const lockTime of lockTimes) {
+        await otpService.setLock('user', lockTime)
+        expect(mockRedisClient.set).toHaveBeenCalledWith(
+          'otp_lock:user',
+          'locked',
+          { EX: lockTime }
+        )
+      }
     })
   })
 })
