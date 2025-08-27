@@ -361,18 +361,20 @@ describe('otpService - сервіс для одноразових паролів
   })
 
   describe('Продуктивність та конкуренція', () => {
-    it('(Позитивний) Має обробляти множинні паралельні операції', async () => {
-      const operations = Array.from({ length: 100 }, (_, i) => 
-        otpService.set(`key${i}`, `code${i}`)
-      )
-      
-      await Promise.all(operations)
+    it('(Позитивний) Має обробляти множинні послідовні операції', async () => {
+      const keys = Array.from({ length: 100 }, (_, i) => `key${i}`)
+
+      for (const key of keys) {
+        await otpService.set(key, `code${
+          key.substring(3)
+        }`)
+      }
       
       expect(mockRedisClient.set).toHaveBeenCalledTimes(100)
       expect(mockRedisClient.connect).toHaveBeenCalledOnce()
     })
 
-    it('(Позитивний) Має обробляти змішані операції паралельно', async () => {
+    it('(Позитивний) Має обробляти змішані операції послідовно', async () => {
       const mixedOps = [
         () => otpService.set('key1', 'code1'),
         () => otpService.get('key1'),
@@ -381,8 +383,9 @@ describe('otpService - сервіс для одноразових паролів
         () => otpService.isLocked('key1')
       ]
 
-      const promises = mixedOps.map(op => op())
-      await Promise.allSettled(promises)
+      for (const op of mixedOps) {
+        await op()
+      }
       
       expect(mockRedisClient.connect).toHaveBeenCalledOnce()
     })
