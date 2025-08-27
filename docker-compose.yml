@@ -1,38 +1,101 @@
+version: '3.8'
+
 services:
-  postgres:
+  # --- Середовище для розробки (Development) ---
+  postgres-dev:
     image: postgres:15
-    container_name: db-postgres
+    container_name: db-postgres-dev
     restart: always
     env_file:
-      - .env
+      - .env.development
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata-dev:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - dev-net
 
-  app:
-    build: .
-    container_name: nuxt-app
+  redis-dev:
+    image: redis:7
+    container_name: redis-dev
+    restart: always
     ports:
-      - "3000:3000"
+      - "6379:6379"
+    volumes:
+      - redis-data-dev:/data
+    networks:
+      - dev-net
+
+  app-dev:
+    build: .
+    container_name: nuxt-app-dev
+    platform: linux/arm64
+    ports:
+      - "${PORT:-3000}:3000"
     depends_on:
-      - postgres
-      - redis
+      - postgres-dev
+      - redis-dev
     env_file:
-      - .env
+      - .env.development
     volumes:
       - .:/app
       - /app/node_modules
     command: sh -c "npm run dev"
-    platform: linux/arm64
+    networks:
+      - dev-net
 
-  redis:
-    image: redis:7
-    ports:
-      - "6379:6379"
+  # --- Середовище для тестування (Test) ---
+  postgres-test:
+    image: postgres:15
+    container_name: db-postgres-test
+    restart: always
+    env_file:
+      - .env.test
     volumes:
-    - redis_data:/data
+      - pgdata-test:/var/lib/postgresql/data
+    ports:
+      - "5433:5432" # Тестова БД на іншому порті хоста
+    networks:
+      - test-net
+
+  redis-test:
+    image: redis:7
+    container_name: redis-test
+    restart: always
+    ports:
+      - "6380:6379" # Тестовий Redis на іншому порті хоста
+    volumes:
+      - redis-data-test:/data
+    networks:
+      - test-net
+
+  app-test:
+    build: .
+    container_name: nuxt-app-test
+    platform: linux/arm64
+    ports:
+      - "${PORT:-3001}:3000"
+    depends_on:
+      - postgres-test
+      - redis-test
+    env_file:
+      - .env.test
+    volumes:
+      - .:/app
+      - /app/node_modules
+    # Приклад команди для запуску тестів, змініть, якщо потрібно
+    command: sh -c "npm run test:integration"
+    networks:
+      - test-net
 
 volumes:
-  pgdata:
-  redis_data:
+  pgdata-dev:
+  pgdata-test:
+  redis-data-dev:
+  redis-data-test:
+
+networks:
+  dev-net:
+    driver: bridge
+  test-net:
+    driver: bridge

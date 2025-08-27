@@ -8,7 +8,9 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "test": "vitest run",
+    "test": "vitest run", 
+    "test:unit": "vitest run test/nuxt/unit/",
+    "test:integration": "vitest run test/nuxt/integration/",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage"
   },

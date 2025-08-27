@@ -38,7 +38,7 @@ jobs:
 
       # Крок 4: Запускаємо юніт-тести
       - name: Run Unit Tests
-        run: npm run test
+        run: npm run test:unit
 
       # Крок 5: Перевіряємо, що проєкт успішно збирається
       - name: Build Application
