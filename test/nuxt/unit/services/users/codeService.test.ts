@@ -23,7 +23,16 @@ vi.mock('~~/server/utils/otp', () => ({
 describe('codeService', () => {
   // Перед кожним тестом очищуємо історію викликів всіх моків.
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
+  })
+
+  describe('error check', () => {
+    it('(Негативний) Має обробляти помилки otpService.set', async () => {
+      vi.mocked(otpService.isLocked).mockResolvedValue(false)
+      vi.mocked(otpService.set).mockRejectedValue(new Error('Redis error'))
+      
+      await expect(codeService.createAndStore('123')).rejects.toThrow('Redis error')
+    })
   })
 
   describe('generateCode - Генерація коду', () => {
@@ -60,10 +69,12 @@ describe('codeService', () => {
 
     it('(Позитивний) Має генерувати різні коди при послідовних викликах', () => {
       // Act
-      const code1 = codeService.generateCode()
-      const code2 = codeService.generateCode()
+      const codes = new Set()
+      for (let i = 0; i < 100; i++) {
+        codes.add(codeService.generateCode())
+      }
       // Assert
-      expect(code1).not.toEqual(code2)
+      expect(codes.size).toBeGreaterThan(95)
     })
   })
 
@@ -97,6 +108,18 @@ describe('codeService', () => {
 
       // Assert
       expect(otpService.set).toHaveBeenCalledWith(phone, expect.any(String), customTtl)
+    })
+
+    it('(Позитивний) Має генерувати код правильного формату', async () => {
+      // Arrange
+      const phone = '123456789'
+      vi.mocked(otpService.isLocked).mockResolvedValue(false)
+      
+      // Act
+      const code = await codeService.createAndStore(phone)
+      
+      // Assert
+      expect(code).toMatch(/^[1-9A-HJ-NP-Z]{6}$/)
     })
 
     it('(Негативний) Має викинути помилку AppError 429, якщо блокування активне', async () => {
