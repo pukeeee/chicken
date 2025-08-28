@@ -12,8 +12,8 @@ on:
 
 # Задачі, які потрібно виконати
 jobs:
-  # Назва задачі (може бути будь-яка)
-  test:
+  # --- Завдання для Юніт-тестів ---
+  unit-test:
     # Вказуємо, що задача має виконуватись на віртуальній машині з Ubuntu
     runs-on: ubuntu-latest
     # Назва середовища, з якого будуть братись секрети
@@ -44,34 +44,87 @@ jobs:
       - name: Build Application
         run: npm run build
 
-      # Крок 6: Сповіщення про успіх (тільки для PR)
-      - name: Send Telegram message on success (Pull Request)
-        if: success() && github.event_name == 'pull_request'
-        run: |
-          MESSAGE="✅ *Тести пройшли успішно!*%0A%0APR: *#${{ github.event.pull_request.number }}*%0AРепозиторій: *${{ github.repository }}*%0A%0A[Перейти до PR](${{ github.event.pull_request.html_url }})"
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -d text="$MESSAGE" \
-            -d parse_mode="Markdown"
-
-      # Крок 7: Сповіщення про помилку (для PR)
-      - name: Send Telegram message on failure (Pull Request)
+      # Крок 6: Сповіщення про помилку (для PR)
+      - name: Send Telegram message on failure unit-test (Pull Request)
         if: failure() && github.event_name == 'pull_request'
         run: |
-          MESSAGE="❌ *Тести провалено!*%0A%0APR: *#${{ github.event.pull_request.number }}*%0AРепозиторій: *${{ github.repository }}*%0A%0A[Перейти до логів](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          MESSAGE="❌ *Unit tests провалено!*%0A%0APR: *#${{ github.event.pull_request.number }}*%0AРепозиторій: *${{ github.repository }}*%0A%0A[Перейти до логів](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d text="$MESSAGE" \
             -d parse_mode="Markdown"
 
-      # Крок 8: Сповіщення про помилку (для коммітів в master)
-      - name: Send Telegram message on failure (Push to master)
+      # Крок 7: Сповіщення про помилку (для коммітів в master)
+      - name: Send Telegram message on failure unit-test (Push to master)
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/master'
         env:
           GITHUB_SHA: ${{ github.sha }}
         run: |
           SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
-          MESSAGE="❌ *Збірка на гілці 'master' провалилася!*%0A%0AРепозиторій: *${{ github.repository }}*%0AКомміт: 
+          MESSAGE="❌ *Unit tests на гілці 'master' провалено!*%0A%0AРепозиторій: *${{ github.repository }}*%0AКомміт: 
+          $SHORT_SHA
+          %0A%0A[Перейти до логів](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="$MESSAGE" \
+            -d parse_mode="Markdown"
+    
+  # --- Завдання для Інтеграційних тестів ---
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: unit-test # Запускати тільки після успішних юніт-тестів
+    environment: ci
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Load .env.test file
+        uses: tiangolo/dotenv-action@v0.9.0
+        with:
+          path: .env.test
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Integration Tests
+        run: npm run test:integration
+        env:
+          REDIS_URI: redis://localhost:6379
+      
+      # Сповіщення про помилку (для PR)
+      - name: Send Telegram message on failure integration-test (Pull Request)
+        if: failure() && github.event_name == 'pull_request'
+        run: |
+          MESSAGE="❌ *Integration tests провалено!*%0A%0APR: *#${{ github.event.pull_request.number }}*%0AРепозиторій: *${{ github.repository }}*%0A%0A[Перейти до логів](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="$MESSAGE" \
+            -d parse_mode="Markdown"
+
+      # Сповіщення про помилку (для коммітів в master)
+      - name: Send Telegram message on failure integration-test (Push to master)
+        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/master'
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
+          MESSAGE="❌ *Integration tests на гілці 'master' провалено!*%0A%0AРепозиторій: *${{ github.repository }}*%0AКомміт: 
           $SHORT_SHA
           %0A%0A[Перейти до логів](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
@@ -79,9 +132,10 @@ jobs:
             -d text="$MESSAGE" \
             -d parse_mode="Markdown"
 
+  # --- Завдання для Автомерджу ---
   automerge:
     name: Automerge
-    needs: test
+    needs: [unit-test, integration-test]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -97,3 +151,13 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           MERGE_METHOD: "squash"
+
+      # Сповіщення про успіх після успішного автомерджу
+      - name: Send Telegram message on success (Pull Request)
+        if: success() && github.event_name == 'pull_request'
+        run: |
+          MESSAGE="✅ *Успішно змерджено!*%0A%0APR: *#${{ github.event.pull_request.number }}*%0A%0A[Перейти до PR](${{ github.event.pull_request.html_url }})"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="$MESSAGE" \
+            -d parse_mode="Markdown"
