@@ -95,9 +95,7 @@ jobs:
           cache: 'npm'
 
       - name: Load .env.test file
-        uses: tiangolo/dotenv-action@v0.9.0
-        with:
-          path: .env.test
+        run: cat .env.test >> $GITHUB_ENV
 
       - name: Install Dependencies
         run: npm ci
