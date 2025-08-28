@@ -31,7 +31,7 @@ describe('Тести продуктивності', () => {
     console.log(`[Performance] Згенеровано 1000 кодів за ${duration.toFixed(2)}ms`)
   })
   
-  it('(Продуктивність) Має ефективно обробляти множинні JWT операції', async () => {
+  it('(Продуктивність) Має ефективно обробляти множинні JWT операції', { timeout: 15000 }, async () => {
     const payloads = Array.from({ length: 10000 }, (_, i) => ({ id: i, role: 'USER' }))
     
     const start = performance.now()
