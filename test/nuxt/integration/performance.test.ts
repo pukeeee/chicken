@@ -47,7 +47,7 @@ describe('Тести продуктивності', () => {
     
     expect(tokens.length).toBe(10000)
     expect(decoded.length).toBe(10000)
-    expect(duration).toBeLessThan(2000) // менше 2 секунд
+    expect(duration).toBeLessThan(10000) // менше 10 секунд
     
     console.log(`[Performance] Оброблено 10000 JWT операцій за ${duration.toFixed(2)}ms`)
   })

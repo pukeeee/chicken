@@ -6,14 +6,29 @@ const client = createClient({
 
 client.on('error', (err) => console.error('Redis error:', err))
 
-// Initialize Redis connection
-let isConnected = false
+let connectionState: 'disconnected' | 'connecting' | 'connected' = 'disconnected';
+let connectionPromise: Promise<unknown> | null = null;;
+
 const initRedis = async () => {
-  if (!isConnected) {
-    await client.connect()
-    isConnected = true
-  }
-}
+    if (connectionState === 'connected') {
+        return;
+    }
+    if (connectionState === 'connecting') {
+        await connectionPromise;
+        return;
+    }
+    
+    connectionState = 'connecting';
+    connectionPromise = client.connect();
+    try {
+        await connectionPromise;
+        connectionState = 'connected';
+    } catch (err) {
+        connectionState = 'disconnected';
+        connectionPromise = null;
+        throw err;
+    }
+};
 
 export const otpService = {
   // Сохранить код

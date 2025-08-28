@@ -8,7 +8,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "test": "vitest run", 
+    "test": "vitest run",
     "test:unit": "vitest run test/nuxt/unit/",
     "test:integration": "vitest run test/nuxt/integration/",
     "test:watch": "vitest",
@@ -53,5 +53,8 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.40.0",
     "vitest": "^3.2.4"
+  },
+  "overrides": {
+    "@typescript-eslint/utils": "^8.0.0"
   }
 }
