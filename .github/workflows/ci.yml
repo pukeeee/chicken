@@ -95,7 +95,7 @@ jobs:
           cache: 'npm'
 
       - name: Load .env.test file
-        run: cat .env.test >> $GITHUB_ENV
+        run: grep -v -e '^#' -e '^\s*$' .env.test >> $GITHUB_ENV
 
       - name: Install Dependencies
         run: npm ci
