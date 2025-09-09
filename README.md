@@ -4,8 +4,8 @@
 docker-compose up -d app-dev
 ```
 ```bash
-docker-compose exec app npx prisma migrate dev
-docker-compose exec app npx prisma db seed
+docker-compose exec app-dev npx prisma migrate dev
+docker-compose exec app-dev npx prisma db seed
 ```
 
 ---
